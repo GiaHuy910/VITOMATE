@@ -1,0 +1,110 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,500;0,600;1,300;1,500;1,600&display=swap");
+
+html {
+  font-family: "Montserrat", sans-serif;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+div {
+  color: #14274e;
+}
+
+.flex-basic-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Button */
+.btn-main {
+  cursor: pointer;
+  background: #14274e;
+  color: #fff;
+  padding: 0 1.5rem;
+  border-radius: 4px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+.btn-main {
+  background: #14274e;
+}
+.btn-disabled {
+  background: #455d8d;
+}
+.btn-main:hover {
+  background: #394867;
+}
+.btn-primary {
+  cursor: pointer;
+  padding: 0 1.5rem;
+  background: transparent;
+  align-items: center;
+  display: flex;
+  height: 50px;
+  border: 1px solid #14274e;
+  color: #14274e;
+}
+.btn-primary:hover {
+  background: #394867;
+  color: #fff;
+}
+/* Button */
+
+/* Text field */
+.text-field {
+  padding: 0.8rem 1rem;
+  background: #f5f5f5;
+  border: none;
+  outline: none;
+  color: #14274e;
+  border-radius: 4px;
+}
+
+input {
+  font-family: "Montserrat", sans-serif;
+}
+/* Text field */
+
+/* Loading Spinner */
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #14274e;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #14274e transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/* Loading Spinner */
