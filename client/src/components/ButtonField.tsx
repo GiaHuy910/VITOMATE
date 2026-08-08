@@ -23,7 +23,7 @@ const ButtonField = ({
   };
   return (
     <div
-      className={`btn btn-${color} ${disabled ? "disabled" : ""}`}
+      className={`btn btn-custom-${color} ${disabled ? "btn-custom-disabled" : ""}`}
       onClick={handleOnClick}
     >
       {!loading ? (
