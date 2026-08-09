@@ -1,5 +1,17 @@
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 const Header = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const user = location.state?.user;
+
+  const handleLogOut = () => {
+    navigate("/", {
+      replace: true,
+      state: null,
+    });
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
@@ -34,40 +46,51 @@ const Header = () => {
               Search
             </button>
           </form>
+          {!user && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => navigate("/sign")}
+            >
+              Sign In
+            </button>
+          )}
         </div>
-        <div className="dropdown">
-          <button
-            className="btn btn-secondary dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton1"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQN_ORqWq8zjZPGFzXDroz9q4RpurmRQpWROni6QCmF9msbCmmRogsZmklm&s=10"
-              alt=""
-              className="user-avatar"
-            />
-            Charlie Q
-          </button>
-          <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-            <li>
-              <a className="dropdown-item" href="#">
-                Action
-              </a>
-            </li>
-            <li>
-              <a className="dropdown-item" href="#">
-                Another action
-              </a>
-            </li>
-            <li>
-              <a className="dropdown-item" href="#">
-                Something else here
-              </a>
-            </li>
-          </ul>
-        </div>
+        {user && (
+          <div className="dropdown ms-2">
+            <button
+              className="btn btn-secondary dropdown-toggle"
+              type="button"
+              id="dropdownMenuButton1"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              {user.username}
+            </button>
+
+            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+              <li>
+                <a className="dropdown-item" href="#">
+                  Profile
+                </a>
+              </li>
+
+              <li>
+                <hr className="dropdown-divider" />
+              </li>
+
+              <li>
+                <button
+                  type="button"
+                  className="dropdown-item"
+                  onClick={handleLogOut}
+                >
+                  Log out
+                </button>
+              </li>
+            </ul>
+          </div>
+        )}
       </div>
     </nav>
   );

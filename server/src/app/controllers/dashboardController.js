@@ -4,10 +4,5 @@ const User = require("../models/User");
 //   multipleMongooseToObject,
 // } = require("../../utils/mongoose");
 
-class DashboardController {
-  //[GET] /
-  index(req, res, next) {
-    res.json({ message: "This is dashboard" });
-  }
-}
+class DashboardController {}
 module.exports = new DashboardController();
