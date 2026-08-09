@@ -1,4 +1,6 @@
 server/node_modules/
+
 client/node_modules/
+client/src/public/css
 
 node_modules/
