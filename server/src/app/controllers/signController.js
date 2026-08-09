@@ -4,14 +4,44 @@ const {
   multipleMongooseToObject,
 } = require("../../utils/mongoose");
 
-class UserController {
-  //[POST] /users/store
-  store(req, res, next) {
+class SignController {
+  //[POST] /sign/signup
+  signup(req, res, next) {
     const user = new User(req.body);
     user
       .save()
-      .then(() => res.redirect("/"))
+      .then((user) => {
+        return res.status(201).json({
+          user,
+        });
+      })
+      .catch((error) => {
+        if (error.code == 11000) {
+          return res.status(409).json({ message: "Email has been used" });
+        }
+        next(error);
+      });
+  }
+  //[POST] /sign/signin
+  signin(req, res, next) {
+    const { email, password } = req.body;
+
+    User.findOne({ email, password })
+      .then((user) => {
+        if (!user) {
+          return res.status(401).json({
+            message: "Email or password is incorrect!",
+          });
+        }
+
+        return res.status(200).json({
+          user: {
+            username: user.username,
+            email: user.email,
+          },
+        });
+      })
       .catch(next);
   }
 }
-module.exports = new UserController();
+module.exports = new SignController();
