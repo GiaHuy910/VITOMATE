@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 type Props = { onSignUp: () => void };
-const baseApi = "http://localhost:3001/sign";
+const baseApi = "http://localhost:3001/auth";
 
 const SignInForm = ({ onSignUp }: Props) => {
   const navigate = useNavigate();
@@ -11,6 +11,26 @@ const SignInForm = ({ onSignUp }: Props) => {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
+
+  const validateEmail = (value: string) => {
+    if (!value.trim()) {
+      return "Email is required";
+    }
+    return "";
+  };
+  const validatePassword = (value: string) => {
+    if (!value.trim()) {
+      return "Password is required";
+    }
+    if (value.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    return "";
+  };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -18,24 +38,57 @@ const SignInForm = ({ onSignUp }: Props) => {
       ...prev,
       [name]: value,
     }));
+
+    switch (name) {
+      case "email":
+        setErrors((prev) => ({ ...prev, email: validateEmail(value) }));
+        break;
+      case "password":
+        setErrors((prev) => ({ ...prev, password: validatePassword(value) }));
+        break;
+    }
   };
 
   const handleSignIn = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
+    const newErrors = {
+      email: validateEmail(fields.email),
+      password: validatePassword(fields.password),
+    };
+    setErrors(newErrors);
+
+    const hasError = Object.values(newErrors).some((message) => message !== "");
+
+    if (hasError) {
+      setError("All information is required !");
+      return;
+    }
+
+    const signUpData = {
+      email: fields.email,
+      password: fields.password,
+    };
+
     fetch(`${baseApi}/signin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(fields),
+      body: JSON.stringify(signUpData),
     })
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw res;
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Sign in failed");
+        }
+        return data;
       })
       .then((data) => {
         navigate("/", { state: { user: data.user } });
+      })
+      .catch((error) => {
+        setError(error.message);
       });
   };
 
@@ -59,6 +112,9 @@ const SignInForm = ({ onSignUp }: Props) => {
                   onChange={handleChange}
                   placeholder="Enter email"
                 />
+                {errors.email && (
+                  <div className="invalid-feedback d-block">{errors.email}</div>
+                )}
               </div>
               <div className="form-group mb-3">
                 <label htmlFor="password">Password</label>
@@ -70,10 +126,13 @@ const SignInForm = ({ onSignUp }: Props) => {
                   onChange={handleChange}
                   placeholder="Password"
                 />
+                {errors.password && (
+                  <div className="invalid-feedback d-block">
+                    {errors.password}
+                  </div>
+                )}
               </div>
-              {/* error */}
-              {error && <p className="text-danger mb-3">{error}</p>}
-
+              {error && <div className="invalid-feedback d-block">{error}</div>}
               <button type="submit" className="btn btn-primary w-100">
                 SIGN UP
               </button>
