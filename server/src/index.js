@@ -1,5 +1,10 @@
 const express = require("express");
 const cors = require("cors");
+const morgan = require("morgan");
+const dotenv = require("dotenv");
+
+//connect to env
+dotenv.config();
 
 const port = 3001;
 const app = express();
@@ -10,6 +15,7 @@ const db = require("./config/db");
 //connect to db
 db.connect();
 
+app.use(morgan("dev"));
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // de xu li thong tin tu form

@@ -1,15 +1,14 @@
-import { useNavigate, useLocation } from "react-router-dom";
-const Header = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+import { useNavigate } from "react-router-dom";
 
-  const user = location.state?.user;
+import { useAuth } from "../contexts/AuthContext";
+
+const Header = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogOut = () => {
-    navigate("/", {
-      replace: true,
-      state: null,
-    });
+    logout();
+    navigate("/");
   };
 
   return (

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 type Props = { onSignIn: () => void };
+
 const baseApi = "http://localhost:3001/auth";
 
 const SignUpForm = ({ onSignIn }: Props) => {
-  const navigate = useNavigate();
   const [errors, setErrors] = useState({
     username: "",
     email: "",
@@ -50,7 +49,7 @@ const SignUpForm = ({ onSignIn }: Props) => {
       return "Password must be at least 6 characters";
     }
     if (value.length > 64) {
-      return "Username must be at most 30 characters";
+      return "Username must be lower than 64 characters";
     }
     return "";
   };
@@ -134,15 +133,14 @@ const SignUpForm = ({ onSignIn }: Props) => {
     fetch(`${baseApi}/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(signUpData),
     })
       .then((res) => {
         if (res.ok) return res.json();
         throw res;
       })
-      .then((data) => {
-        navigate("/", { state: { user: data.user } });
+      .then(() => {
+        onSignIn();
       })
       .catch((error) => {
         setError(error.message);

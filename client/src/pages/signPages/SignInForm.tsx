@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../contexts/AuthContext";
+
 type Props = { onSignUp: () => void };
 const baseApi = "http://localhost:3001/auth";
 
@@ -15,6 +17,7 @@ const SignInForm = ({ onSignUp }: Props) => {
     email: "",
     password: "",
   });
+  const { setUser } = useAuth();
 
   const validateEmail = (value: string) => {
     if (!value.trim()) {
@@ -66,7 +69,7 @@ const SignInForm = ({ onSignUp }: Props) => {
       return;
     }
 
-    const signUpData = {
+    const signInData = {
       email: fields.email,
       password: fields.password,
     };
@@ -75,7 +78,7 @@ const SignInForm = ({ onSignUp }: Props) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(signUpData),
+      body: JSON.stringify(signInData),
     })
       .then(async (res) => {
         const data = await res.json();
@@ -85,7 +88,10 @@ const SignInForm = ({ onSignUp }: Props) => {
         return data;
       })
       .then((data) => {
-        navigate("/", { state: { user: data.user } });
+        const { token, user } = data;
+        localStorage.setItem("token", token);
+        setUser(user);
+        navigate("/");
       })
       .catch((error) => {
         setError(error.message);
