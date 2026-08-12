@@ -51,6 +51,9 @@ const SignInForm = ({ onSignUp }: Props) => {
         break;
     }
   };
+  const handleSignWithGithub = () => {
+    window.location.href = `${baseApi}/github`;
+  };
 
   const handleSignIn = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -139,19 +142,27 @@ const SignInForm = ({ onSignUp }: Props) => {
                 )}
               </div>
               {error && <div className="invalid-feedback d-block">{error}</div>}
-              <button type="submit" className="btn btn-primary w-100">
-                SIGN UP
-              </button>
-              <span>
-                Create an account?{" "}
-                <button
-                  type="button"
-                  onClick={onSignUp}
-                  className="btn btn-link p-0"
-                >
+              <div>
+                <button type="submit" className="btn btn-primary w-100">
                   SIGN UP
                 </button>
-              </span>
+                <span>
+                  Create an account?{" "}
+                  <button
+                    type="button"
+                    onClick={onSignUp}
+                    className="btn btn-link p-0"
+                  >
+                    SIGN UP
+                  </button>
+                </span>
+              </div>
+              <div className="sign-with-github d-flex justify-content-center">
+                {" "}
+                <button type="button" onClick={handleSignWithGithub}>
+                  Continue with GitHub
+                </button>
+              </div>
             </form>
           </div>
         </div>
