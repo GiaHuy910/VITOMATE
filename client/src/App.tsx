@@ -2,8 +2,9 @@ import React, { Children, Suspense } from "react";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import DashBoard from "./pages/Dashboard";
+import DashBoard from "./pages/DashBoard";
 import SignPage from "./pages/signPages/SignPage";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const appRoutes: RouteObject[] = [
   {
@@ -28,9 +29,12 @@ const router = createBrowserRouter([
 
 const App = () => {
   return (
-    <Suspense>
-      <RouterProvider router={router} />;
-    </Suspense>
+    <AuthProvider>
+      {" "}
+      <Suspense>
+        <RouterProvider router={router} />;
+      </Suspense>
+    </AuthProvider>
   );
 };
 
