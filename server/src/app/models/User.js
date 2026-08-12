@@ -5,11 +5,12 @@ const Schema = mongoose.Schema;
 
 const UserSchema = new Schema(
   {
+    userId: { type: Number, unique: true, required: true },
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
   },
   { timestamps: true },
 );
-
+// userSchema.index({ username: 1, email: 1 });
 module.exports = mongoose.model("User", UserSchema);
