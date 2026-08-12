@@ -129,5 +129,52 @@ class AuthController {
       return res.status(401).json({ message: "Unauthorized!" });
     }
   }
+  //[GET] /auth/github
+  github(req, res) {
+    const params = new URLSearchParams({
+      client_id: process.env.GITHUB_CLIENT_ID,
+      redirect_uri: process.env.GITHUB_CALLBACK_URL,
+      scope: "read:user user:email",
+    });
+    res.redirect(
+      `https://github.com/login/oauth/authorize?${params.toString()}`,
+    );
+  }
+  //[GET] /auth/github/callback
+  async githubCallback(req, res) {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        return res
+          .status(400)
+          .json({ message: "Authorization code is missing!" });
+      }
+
+      const tokenResponse = await fetch(
+        "https://github.com/login/oauth/access_token",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            client_id: process.env.GITHUB_CLIENT_ID,
+            client_secret: process.env.GITHUB_CLIENT_SECRET,
+            code,
+            redirect_uri: process.env.GITHUB_CALLBACK_URL,
+          }),
+        },
+      );
+
+      const tokenData = await tokenResponse.json();
+
+      const githubAccessToken = tokenData.access_token;
+    } catch (error) {
+      console.error("GITHUB authorization error :", error);
+
+      return res.status(500).json({ message: "Github authorization failed!" });
+    }
+  }
 }
 module.exports = new AuthController();
