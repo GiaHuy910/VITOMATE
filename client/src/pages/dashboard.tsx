@@ -1,21 +1,20 @@
-import { useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const DashBoard = () => {
-  const location = useLocation();
-  const user = location.state?.user;
+  const { user, loading } = useAuth();
 
   return (
-    <>
-      <div className="flex-basic-between">
-        {" "}
-        <h1>DASHBOARD</h1>
-        {user ? (
-          <h2>Welcome, {user.username}</h2>
-        ) : (
-          <p>You have not sign in yet!</p>
-        )}
-      </div>
-    </>
+    <div className="flex-basic-between">
+      <h1>DASHBOARD</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : user ? (
+        <h2>Welcome, {user.username}</h2>
+      ) : (
+        <p>You have not signed in yet!</p>
+      )}
+    </div>
   );
 };
 
