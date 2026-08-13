@@ -12,5 +12,6 @@ const UserSchema = new Schema(
   },
   { timestamps: true },
 );
+
 // userSchema.index({ username: 1, email: 1 });
 module.exports = mongoose.model("User", UserSchema);

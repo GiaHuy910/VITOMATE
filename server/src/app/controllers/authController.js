@@ -168,8 +168,16 @@ class AuthController {
       );
 
       const tokenData = await tokenResponse.json();
-
       const githubAccessToken = tokenData.access_token;
+
+      const githubUserResponse = await fetch("https://api.github.com/user", {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubAccessToken}`,
+        },
+      });
+
+      const githubUser = await githubUserResponse.json();
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 
