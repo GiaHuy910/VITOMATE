@@ -7,8 +7,6 @@ const agentRouter = require("./routes/agent.routes");
 
 const app = express();
 
-const h = 1;
-
 app.use(express.json());
 
 app.get("/health", (req, res) => {
