@@ -82,9 +82,15 @@ class AuthController {
         },
       );
 
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 1000,
+      });
+
       return res.status(200).json({
         message: "Sign in successful",
-        token,
         user: {
           userId: user.userId,
           username: user.username,
@@ -100,16 +106,11 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith("Bearer ")) {
+      const token = req.cookies.token;
+      if (!token) {
         return res.status(401).json({
           message: "Unauthorized",
         });
-      }
-
-      const token = authHeader.slice(7);
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized!" });
       }
 
       const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
@@ -128,6 +129,16 @@ class AuthController {
     } catch (error) {
       return res.status(401).json({ message: "Unauthorized!" });
     }
+  }
+  //[POST] /auth/logout
+  logout(req, res) {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({ message: "Logout succesfully" });
   }
   //[GET] /auth/github
   github(req, res) {
@@ -178,6 +189,67 @@ class AuthController {
       });
 
       const githubUser = await githubUserResponse.json();
+
+      const githubEmailResponse = await fetch(
+        "https://api.github.com/user/emails",
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${githubAccessToken}`,
+          },
+        },
+      );
+
+      const githubEmails = await githubEmailResponse.json();
+
+      const primaryEmail = githubEmails.find(
+        (email) => email.primary && email.verified,
+      );
+      const email = primaryEmail?.email;
+
+      let user = await User.findOne({
+        githubId: String(githubUser.id),
+      });
+
+      if (!user) {
+        user = await User.findOne({
+          email,
+        });
+
+        if (user) {
+          //link github vao acc hien tai
+          user.githubId = String(githubUser.id);
+          await user.save();
+        } else {
+          const userId = await getNextUserId();
+
+          user = await User.create({
+            userId,
+            githubId: String(githubUser.id),
+            username: githubUser.login,
+            email,
+          });
+        }
+      }
+      // 11. Tạo JWT của VITOMATE
+      const token = jwt.sign(
+        {
+          sub: user.userId,
+        },
+        process.env.JWT_SECRET,
+        {
+          algorithm: "HS256",
+          expiresIn: "1h",
+        },
+      );
+      // Redirect về FE
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 1000, // 1 hour
+      });
+      return res.redirect(`http://localhost:5173/`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 
