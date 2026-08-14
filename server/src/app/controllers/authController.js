@@ -174,7 +174,7 @@ class AuthController {
           user = await User.create({
             userId,
             githubId: githubUser.githubId,
-            username: githubUser.login,
+            username: githubUser.username,
             email: githubUser.email,
           });
         }
