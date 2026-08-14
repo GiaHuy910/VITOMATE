@@ -1,11 +1,13 @@
 {
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "platform"
   ],
   "scripts": {
     "client": "npm run start --prefix client",
     "server": "npm run start --prefix server",
+    "platform": "npm run start --prefix platform",
     "watch": "npm run watch --prefix client"
   },
   "devDependencies": {

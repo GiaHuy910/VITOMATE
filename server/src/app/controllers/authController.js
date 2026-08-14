@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 // const {
@@ -7,6 +6,8 @@ const User = require("../models/User");
 //   multipleMongooseToObject,
 // } = require("../../utils/mongoose");
 const { getNextUserId } = require("../../utils/getNextUserId");
+const { getGithubUserInfo } = require("../services/githubService");
+const { createToken, verifyToken } = require("../../utils/jwt");
 
 class AuthController {
   //[POST] /auth/signup
@@ -71,20 +72,17 @@ class AuthController {
       }
 
       //Jwt,session o day
-      const token = jwt.sign(
-        {
-          sub: user.userId,
-        },
-        process.env.JWT_SECRET,
-        {
-          algorithm: "HS256",
-          expiresIn: "1h",
-        },
-      );
+      const token = createToken(user.userId);
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 1000,
+      });
 
       return res.status(200).json({
         message: "Sign in successful",
-        token,
         user: {
           userId: user.userId,
           username: user.username,
@@ -100,19 +98,14 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith("Bearer ")) {
+      const token = req.cookies.token;
+      if (!token) {
         return res.status(401).json({
           message: "Unauthorized",
         });
       }
 
-      const token = authHeader.slice(7);
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized!" });
-      }
-
-      const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
+      const decodedPayload = verifyToken(token);
       const user = await User.findOne({ userId: decodedPayload.sub });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
@@ -128,6 +121,16 @@ class AuthController {
     } catch (error) {
       return res.status(401).json({ message: "Unauthorized!" });
     }
+  }
+  //[POST] /auth/logout
+  logout(req, res) {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({ message: "Logout succesfully" });
   }
   //[GET] /auth/github
   github(req, res) {
@@ -150,26 +153,42 @@ class AuthController {
           .json({ message: "Authorization code is missing!" });
       }
 
-      const tokenResponse = await fetch(
-        "https://github.com/login/oauth/access_token",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            client_id: process.env.GITHUB_CLIENT_ID,
-            client_secret: process.env.GITHUB_CLIENT_SECRET,
-            code,
-            redirect_uri: process.env.GITHUB_CALLBACK_URL,
-          }),
-        },
-      );
+      const githubUser = await getGithubUserInfo(code);
 
-      const tokenData = await tokenResponse.json();
+      let user = await User.findOne({
+        githubId: githubUser.githubId,
+      });
 
-      const githubAccessToken = tokenData.access_token;
+      if (!user) {
+        user = await User.findOne({
+          email: githubUser.email,
+        });
+
+        if (user) {
+          //link github vao acc hien tai
+          user.githubId = githubUser.githubId;
+          await user.save();
+        } else {
+          const userId = await getNextUserId();
+
+          user = await User.create({
+            userId,
+            githubId: githubUser.githubId,
+            username: githubUser.login,
+            email: githubUser.email,
+          });
+        }
+      }
+      // 11. Tạo JWT của VITOMATE
+      const token = createToken(user.userId);
+      // Redirect về FE
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 1000, // 1 hour
+      });
+      return res.redirect(`http://localhost:5173/`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 
