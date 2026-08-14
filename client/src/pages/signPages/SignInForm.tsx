@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 
 type Props = { onSignUp: () => void };
 const baseApi = "http://localhost:3001/auth";
@@ -91,9 +91,7 @@ const SignInForm = ({ onSignUp }: Props) => {
         return data;
       })
       .then((data) => {
-        const { token, user } = data;
-        localStorage.setItem("token", token);
-        setUser(user);
+        setUser(data.user);
         navigate("/");
       })
       .catch((error) => {
