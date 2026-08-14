@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 // const {
@@ -7,6 +6,8 @@ const User = require("../models/User");
 //   multipleMongooseToObject,
 // } = require("../../utils/mongoose");
 const { getNextUserId } = require("../../utils/getNextUserId");
+const { getGithubUserInfo } = require("../services/githubService");
+const { createToken, verifyToken } = require("../../utils/jwt");
 
 class AuthController {
   //[POST] /auth/signup
@@ -71,16 +72,7 @@ class AuthController {
       }
 
       //Jwt,session o day
-      const token = jwt.sign(
-        {
-          sub: user.userId,
-        },
-        process.env.JWT_SECRET,
-        {
-          algorithm: "HS256",
-          expiresIn: "1h",
-        },
-      );
+      const token = createToken(user.userId);
 
       res.cookie("token", token, {
         httpOnly: true,
@@ -113,7 +105,7 @@ class AuthController {
         });
       }
 
-      const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
+      const decodedPayload = verifyToken(token);
       const user = await User.findOne({ userId: decodedPayload.sub });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
@@ -161,87 +153,34 @@ class AuthController {
           .json({ message: "Authorization code is missing!" });
       }
 
-      const tokenResponse = await fetch(
-        "https://github.com/login/oauth/access_token",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            client_id: process.env.GITHUB_CLIENT_ID,
-            client_secret: process.env.GITHUB_CLIENT_SECRET,
-            code,
-            redirect_uri: process.env.GITHUB_CALLBACK_URL,
-          }),
-        },
-      );
-
-      const tokenData = await tokenResponse.json();
-      const githubAccessToken = tokenData.access_token;
-
-      const githubUserResponse = await fetch("https://api.github.com/user", {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${githubAccessToken}`,
-        },
-      });
-
-      const githubUser = await githubUserResponse.json();
-
-      const githubEmailResponse = await fetch(
-        "https://api.github.com/user/emails",
-        {
-          headers: {
-            Accept: "application/vnd.github+json",
-            Authorization: `Bearer ${githubAccessToken}`,
-          },
-        },
-      );
-
-      const githubEmails = await githubEmailResponse.json();
-
-      const primaryEmail = githubEmails.find(
-        (email) => email.primary && email.verified,
-      );
-      const email = primaryEmail?.email;
+      const githubUser = await getGithubUserInfo(code);
 
       let user = await User.findOne({
-        githubId: String(githubUser.id),
+        githubId: githubUser.githubId,
       });
 
       if (!user) {
         user = await User.findOne({
-          email,
+          email: githubUser.email,
         });
 
         if (user) {
           //link github vao acc hien tai
-          user.githubId = String(githubUser.id);
+          user.githubId = githubUser.githubId;
           await user.save();
         } else {
           const userId = await getNextUserId();
 
           user = await User.create({
             userId,
-            githubId: String(githubUser.id),
+            githubId: githubUser.githubId,
             username: githubUser.login,
-            email,
+            email: githubUser.email,
           });
         }
       }
       // 11. Tạo JWT của VITOMATE
-      const token = jwt.sign(
-        {
-          sub: user.userId,
-        },
-        process.env.JWT_SECRET,
-        {
-          algorithm: "HS256",
-          expiresIn: "1h",
-        },
-      );
+      const token = createToken(user.userId);
       // Redirect về FE
       res.cookie("token", token, {
         httpOnly: true,
