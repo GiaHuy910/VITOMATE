@@ -5,6 +5,8 @@ import type { RouteObject } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import DashBoard from "./pages/dashboard";
 import WorkSpace from "./pages/WorkSpace";
+import Profile from "./pages/Profile";
+import Setting from "./pages/Setting";
 import SignPage from "./pages/signPages/SignPage";
 
 const appRoutes: RouteObject[] = [
@@ -23,6 +25,14 @@ const appRoutes: RouteObject[] = [
       {
         path: "/workspace",
         element: <WorkSpace />,
+      },
+      {
+        path: "/setting",
+        element: <Setting />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
       },
     ],
   },
