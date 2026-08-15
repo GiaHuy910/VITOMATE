@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth";
 
+import brandLogo from "../assets/brand-logo-small.png";
+
+const nameLogo = "VITOMATE";
+
 const Header = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -9,11 +13,28 @@ const Header = () => {
     logout();
     navigate("/");
   };
+  const handlePressLogo = () => {
+    navigate("/");
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-        <div style={{ fontSize: "25px", fontWeight: 1000 }}>VITOMATE</div>
+        <div
+          className="logo-container"
+          style={{
+            width: "130px",
+            height: "40px",
+          }}
+          onClick={handlePressLogo}
+        >
+          <img
+            src={brandLogo}
+            alt={nameLogo}
+            style={{ width: "90%", cursor: "pointer" }}
+            className="logo-image img-fluid "
+          />
+        </div>
         <button
           className="navbar-toggler"
           type="button"
