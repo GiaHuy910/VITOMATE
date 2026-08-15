@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth";
 
 import brandLogo from "../assets/brand-logo-small.png";
+import placeholderImage from "../assets/placeholder.jpg";
+import { userUtilityPage } from "../pages/userUtilityPages";
 
 const nameLogo = "VITOMATE";
 
@@ -13,8 +15,11 @@ const Header = () => {
     logout();
     navigate("/");
   };
-  const handlePressLogo = () => {
+  const handleLogo = () => {
     navigate("/");
+  };
+  const handleWorkSpace = () => {
+    navigate("/workspace");
   };
 
   return (
@@ -26,7 +31,7 @@ const Header = () => {
             width: "130px",
             height: "40px",
           }}
-          onClick={handlePressLogo}
+          onClick={handleLogo}
         >
           <img
             src={brandLogo}
@@ -49,7 +54,12 @@ const Header = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <a className="nav-link active" aria-current="page" href="#">
+              <a
+                className="nav-link active"
+                aria-current="page"
+                href=""
+                onClick={handleWorkSpace}
+              >
                 My Workspace
               </a>
             </li>
@@ -84,16 +94,18 @@ const Header = () => {
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
+              <img src={placeholderImage} alt="" className="user-avatar" />
               {user.username}
             </button>
 
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-              <li>
-                <a className="dropdown-item" href="#">
-                  Profile
-                </a>
-              </li>
-
+              {userUtilityPage.map((page) => (
+                <li key={page.path}>
+                  <Link className="dropdown-item" to={page.path}>
+                    {page.name}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <hr className="dropdown-divider" />
               </li>
