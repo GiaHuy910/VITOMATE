@@ -94,7 +94,11 @@ const Header = () => {
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              <img src={placeholderImage} alt="" className="user-avatar" />
+              <img
+                src={placeholderImage}
+                alt=""
+                className="user-avatar-small"
+              />
               {user.username}
             </button>
 
