@@ -1,10 +1,6 @@
 const bcrypt = require("bcrypt");
 
 const User = require("../models/User");
-// const {
-//   mongooseToObject,
-//   multipleMongooseToObject,
-// } = require("../../utils/mongoose");
 const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
 const { createToken, verifyToken } = require("../../utils/jwt");
@@ -100,15 +96,7 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const token = req.cookies.token;
-      if (!token) {
-        return res.status(401).json({
-          message: "Unauthorized",
-        });
-      }
-
-      const decodedPayload = verifyToken(token);
-      const user = await User.findOne({ userId: decodedPayload.sub });
+      const user = await User.findOne({ userId: req.user.sub });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
       }
