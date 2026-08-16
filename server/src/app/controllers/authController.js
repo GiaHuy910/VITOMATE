@@ -14,6 +14,7 @@ class AuthController {
   async signup(req, res, next) {
     try {
       const { username, email, password } = req.body;
+      const displayname = username;
 
       //business validation
       const existingUser = await User.findOne({
@@ -32,6 +33,7 @@ class AuthController {
 
       //tao user
       const user = await User.create({
+        displayname,
         userId,
         username,
         email,
@@ -172,6 +174,7 @@ class AuthController {
           const userId = await getNextUserId();
 
           user = await User.create({
+            displayname: githubUser.username,
             userId,
             githubId: githubUser.githubId,
             username: githubUser.username,
