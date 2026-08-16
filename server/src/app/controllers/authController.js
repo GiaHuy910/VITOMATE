@@ -1,10 +1,6 @@
 const bcrypt = require("bcrypt");
 
 const User = require("../models/User");
-// const {
-//   mongooseToObject,
-//   multipleMongooseToObject,
-// } = require("../../utils/mongoose");
 const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
 const { createToken, verifyToken } = require("../../utils/jwt");
@@ -14,6 +10,7 @@ class AuthController {
   async signup(req, res, next) {
     try {
       const { username, email, password } = req.body;
+      const displayname = username;
 
       //business validation
       const existingUser = await User.findOne({
@@ -32,6 +29,7 @@ class AuthController {
 
       //tao user
       const user = await User.create({
+        displayname,
         userId,
         username,
         email,
@@ -98,24 +96,16 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const token = req.cookies.token;
-      if (!token) {
-        return res.status(401).json({
-          message: "Unauthorized",
-        });
-      }
-
-      const decodedPayload = verifyToken(token);
-      const user = await User.findOne({ userId: decodedPayload.sub });
+      const userId = req.user.userId;
+      const user = await User.findOne({ userId });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
       }
 
       return res.status(200).json({
         user: {
-          userId: user.userId,
+          displayname: user.displayname,
           username: user.username,
-          email: user.email,
         },
       });
     } catch (error) {
@@ -172,6 +162,7 @@ class AuthController {
           const userId = await getNextUserId();
 
           user = await User.create({
+            displayname: githubUser.username,
             userId,
             githubId: githubUser.githubId,
             username: githubUser.username,
