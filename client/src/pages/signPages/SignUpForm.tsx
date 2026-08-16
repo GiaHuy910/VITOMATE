@@ -135,9 +135,12 @@ const SignUpForm = ({ onSignIn }: Props) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(signUpData),
     })
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw res;
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Signup failed");
+        }
+        return data;
       })
       .then(() => {
         onSignIn();

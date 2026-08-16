@@ -1,5 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth";
+
+import brandLogo from "../assets/brand-logo-small.png";
+import placeholderImage from "../assets/placeholder.jpg";
+import { userUtilityPage } from "../pages/userUtilityPages";
+
+const nameLogo = "VITOMATE";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -9,11 +15,31 @@ const Header = () => {
     logout();
     navigate("/");
   };
+  const handleLogo = () => {
+    navigate("/");
+  };
+  const handleWorkSpace = () => {
+    navigate("/workspace");
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-        <div style={{ fontSize: "25px", fontWeight: 1000 }}>VITOMATE</div>
+        <div
+          className="logo-container"
+          style={{
+            width: "130px",
+            height: "40px",
+          }}
+          onClick={handleLogo}
+        >
+          <img
+            src={brandLogo}
+            alt={nameLogo}
+            style={{ width: "90%", cursor: "pointer" }}
+            className="logo-image img-fluid "
+          />
+        </div>
         <button
           className="navbar-toggler"
           type="button"
@@ -28,7 +54,12 @@ const Header = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <a className="nav-link active" aria-current="page" href="#">
+              <a
+                className="nav-link active"
+                aria-current="page"
+                href=""
+                onClick={handleWorkSpace}
+              >
                 My Workspace
               </a>
             </li>
@@ -63,16 +94,22 @@ const Header = () => {
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
+              <img
+                src={placeholderImage}
+                alt=""
+                className="user-avatar-small"
+              />
               {user.username}
             </button>
 
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-              <li>
-                <a className="dropdown-item" href="#">
-                  Profile
-                </a>
-              </li>
-
+              {userUtilityPage.map((page) => (
+                <li key={page.path}>
+                  <Link className="dropdown-item" to={page.path}>
+                    {page.name}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <hr className="dropdown-divider" />
               </li>
