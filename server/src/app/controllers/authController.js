@@ -96,16 +96,16 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const user = await User.findOne({ userId: req.user.sub });
+      const userId = req.user.userId;
+      const user = await User.findOne({ userId });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
       }
 
       return res.status(200).json({
         user: {
-          userId: user.userId,
+          displayname: user.displayname,
           username: user.username,
-          email: user.email,
         },
       });
     } catch (error) {
