@@ -85,6 +85,9 @@ class AuthController {
           userId: user.userId,
           username: user.username,
           email: user.email,
+          avatar: {
+            url: user.avatar.url,
+          },
         },
       });
     } catch (error) {
@@ -106,6 +109,10 @@ class AuthController {
         user: {
           displayname: user.displayname,
           username: user.username,
+          email: user.email,
+          avatar: {
+            url: user.avatar.url,
+          },
         },
       });
     } catch (error) {
@@ -170,14 +177,12 @@ class AuthController {
           });
         }
       }
-      // 11. Tạo JWT của VITOMATE
       const token = createToken(user.userId);
-      // Redirect về FE
       res.cookie("token", token, {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 60 * 60 * 1000, // 1 hour
+        maxAge: 60 * 60 * 1000, //1 gio
       });
       return res.redirect(`http://localhost:5173/`);
     } catch (error) {
