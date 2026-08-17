@@ -95,7 +95,7 @@ const Header = () => {
               aria-expanded="false"
             >
               <img
-                src={placeholderImage}
+                src={user?.avatar.url || placeholderImage}
                 alt=""
                 className="user-avatar-small"
               />
