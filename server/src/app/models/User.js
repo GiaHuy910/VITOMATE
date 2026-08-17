@@ -15,6 +15,16 @@ const UserSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    avatar: {
+      url: {
+        type: String,
+        default: null,
+      },
+      publicId: {
+        type: String,
+        default: null,
+      },
+    },
   },
   { timestamps: true },
 );

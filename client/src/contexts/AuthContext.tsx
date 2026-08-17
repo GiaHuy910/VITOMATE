@@ -4,6 +4,9 @@ export type User = {
   userId: number;
   username: string;
   email: string;
+  avatar: {
+    url: string | null;
+  };
 };
 
 export type AuthContextType = {
