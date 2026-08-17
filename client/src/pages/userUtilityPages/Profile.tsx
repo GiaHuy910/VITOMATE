@@ -1,4 +1,4 @@
-// import { useAuth } from "../../contexts/useAuth";
+import { useAuth } from "../../contexts/useAuth";
 import { Link } from "react-router-dom";
 import { userUtilityPage } from "./index";
 import { useEffect, useState } from "react";
@@ -8,28 +8,39 @@ import placeholderImage from "../../assets/placeholder.jpg";
 const baseApi = "http://localhost:3001/users";
 
 type ProfileUser = {
+  userId: number;
+  displayname: string;
+  username: string;
+  email: string;
+  avatar: {
+    url: string | null;
+    publicId: string | null;
+  };
+};
+
+type ProfileFormData = {
   displayname: string;
   username: string;
   email: string;
 };
 
 const Profile = () => {
-  // const { user, loading } = useAuth();
+  const { setUser: setAuthUser } = useAuth();
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [editing, setEditing] = useState({
     displayname: false,
     username: false,
     email: false,
+    avatar: false,
   });
 
-  const [formData, setFormData] = useState<ProfileUser>({
+  const [formData, setFormData] = useState<ProfileFormData>({
     displayname: "",
     username: "",
     email: "",
   });
 
-  const handleSave = async (field: keyof ProfileUser) => {
-    // Không cho save nếu giá trị không thay đổi
+  const handleSave = async (field: keyof ProfileFormData) => {
     if (formData[field] === user?.[field]) {
       return;
     }
@@ -51,12 +62,85 @@ const Profile = () => {
       }
 
       setUser(data.user);
+      setAuthUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              username: data.user.username,
+              email: data.user.email,
+            }
+          : prev,
+      );
       setEditing({
         ...editing,
         [field]: false,
       });
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const response = await fetch(`${baseApi}/me/avatar`, {
+        method: "PATCH",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setUser(data.user);
+      setAuthUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              avatar: {
+                url: data.user.avatar.url,
+              },
+            }
+          : prev,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const response = await fetch(`${baseApi}/me/avatar`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Delete avatar failed");
+      }
+      setUser(data.user);
+      setAuthUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              avatar: {
+                url: null,
+              },
+            }
+          : prev,
+      );
+
+      setEditing({
+        ...editing,
+        avatar: false,
+      });
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -141,14 +225,29 @@ const Profile = () => {
                     />
                     <div className="d-flex">
                       {editing.displayname ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.displayname === user?.displayname}
-                          onClick={() => handleSave("displayname")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
+                        <div className="ms-auto">
+                          <button
+                            className="btn btn-secondary me-1"
+                            onClick={() => {
+                              setEditing({
+                                ...editing,
+                                displayname: false,
+                              });
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn btn-success"
+                            disabled={
+                              formData.displayname === user?.displayname
+                            }
+                            onClick={() => handleSave("displayname")}
+                          >
+                            <i className="bi bi-check-lg pe-1"></i>
+                            Save
+                          </button>
+                        </div>
                       ) : (
                         <button
                           className="btn btn-secondary ms-auto"
@@ -182,14 +281,27 @@ const Profile = () => {
                     />
                     <div className="d-flex">
                       {editing.username ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.username === user?.username}
-                          onClick={() => handleSave("username")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
+                        <div className="ms-auto">
+                          <button
+                            className="btn btn-secondary me-1"
+                            onClick={() => {
+                              setEditing({
+                                ...editing,
+                                username: false,
+                              });
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn btn-success"
+                            disabled={formData.username === user?.username}
+                            onClick={() => handleSave("username")}
+                          >
+                            <i className="bi bi-check-lg pe-1"></i>
+                            Save
+                          </button>
+                        </div>
                       ) : (
                         <button
                           className="btn btn-secondary ms-auto"
@@ -223,14 +335,27 @@ const Profile = () => {
                     />
                     <div className="d-flex">
                       {editing.email ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.email === user?.email}
-                          onClick={() => handleSave("email")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
+                        <div className="ms-auto">
+                          <button
+                            className="btn btn-secondary me-1"
+                            onClick={() => {
+                              setEditing({
+                                ...editing,
+                                email: false,
+                              });
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn btn-success"
+                            disabled={formData.email === user?.email}
+                            onClick={() => handleSave("email")}
+                          >
+                            <i className="bi bi-check-lg pe-1"></i>
+                            Save
+                          </button>
+                        </div>
                       ) : (
                         <button
                           className="btn btn-secondary ms-auto"
@@ -251,16 +376,60 @@ const Profile = () => {
                   </div>
                   <div className="d-flex flex-column align-items-start col-md-8 ">
                     <img
-                      src={placeholderImage}
+                      src={user?.avatar.url || placeholderImage}
                       alt="placeholderImage"
                       className="user-avatar-big"
                     />
-                    <div style={{ paddingInlineStart: "5px" }}>
-                      {" "}
-                      <button className="btn btn-secondary">
-                        {" "}
+                    <div className="dropdown mt-2">
+                      <button
+                        className="btn btn-secondary dropdown-toggle"
+                        onClick={() =>
+                          setEditing({
+                            ...editing,
+                            avatar: !editing.avatar,
+                          })
+                        }
+                      >
                         <i className="bi bi-pencil-square pe-1"></i>Edit
                       </button>
+                      {editing.avatar && (
+                        <ul className="dropdown-menu show">
+                          <li>
+                            <label
+                              className="dropdown-item"
+                              style={{ cursor: "pointer" }}
+                            >
+                              <i className="bi bi-upload pe-2"></i>
+                              Upload avatar
+                              <input
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={(e) => {
+                                  handleAvatarChange(e);
+                                  setEditing({
+                                    ...editing,
+                                    avatar: false,
+                                  });
+                                }}
+                              />
+                            </label>
+                          </li>
+
+                          {user?.avatar.url && (
+                            <li>
+                              <button
+                                type="button"
+                                className="dropdown-item text-danger"
+                                onClick={handleDeleteAvatar}
+                              >
+                                <i className="bi bi-trash pe-2"></i>
+                                Delete avatar
+                              </button>
+                            </li>
+                          )}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 </div>
