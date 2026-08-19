@@ -8,6 +8,8 @@ import WorkSpace from "./pages/WorkSpace";
 import SignPage from "./pages/signPages/SignPage";
 import Profile from "./pages/userUtilityPages/Profile";
 import Setting from "./pages/userUtilityPages/Setting";
+import CreateRepo from "./pages/CreateRepo";
+import Repository from "./pages/Repository";
 
 const appRoutes: RouteObject[] = [
   {
@@ -15,8 +17,18 @@ const appRoutes: RouteObject[] = [
     element: <MainLayout />,
     children: [
       {
-        index: true,
+        path: "/dashboard",
         element: <DashBoard />,
+        children: [
+          {
+            index: true,
+            element: <DashBoard />,
+          },
+          {
+            path: ":id",
+            element: <Repository />,
+          },
+        ],
       },
       {
         path: "/sign",
@@ -34,6 +46,10 @@ const appRoutes: RouteObject[] = [
         path: "/profile",
         element: <Profile />,
       },
+      {
+        path: "/create",
+        element: <CreateRepo />,
+      },
     ],
   },
 ];
@@ -45,7 +61,7 @@ const router = createBrowserRouter([
 const App = () => {
   return (
     <Suspense>
-      <RouterProvider router={router} />;
+      <RouterProvider router={router} />
     </Suspense>
   );
 };
