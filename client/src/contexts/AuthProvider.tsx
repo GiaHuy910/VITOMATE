@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthContext, type User } from "./AuthContext";
+import { logOutUser } from "../api/auth";
 
 const baseApi = "http://localhost:3001/auth";
 
@@ -37,12 +38,12 @@ export const AuthProvider = ({ children }: Props) => {
   }, []);
 
   const logout = async () => {
-    await fetch(`${baseApi}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    setUser(null);
+    try {
+      await logOutUser();
+      setUser(null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
