@@ -6,7 +6,7 @@ const authenticate = (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const decodedPayload = jwt.verifyToken(token);
+    const decodedPayload = jwt.verifyJwt(token);
     req.user = {
       userId: decodedPayload.sub,
     };

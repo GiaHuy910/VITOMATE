@@ -25,6 +25,7 @@ const UserSchema = new Schema(
         default: null,
       },
     },
+    encryptedToken: { type: String, required: false },
   },
   { timestamps: true },
 );
