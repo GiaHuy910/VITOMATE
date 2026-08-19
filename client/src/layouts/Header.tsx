@@ -13,10 +13,10 @@ const Header = () => {
 
   const handleLogOut = () => {
     logout();
-    navigate("/");
+    navigate("/sign");
   };
   const handleLogo = () => {
-    navigate("/");
+    navigate("/dashboard");
   };
   const handleWorkSpace = () => {
     navigate("/workspace");
