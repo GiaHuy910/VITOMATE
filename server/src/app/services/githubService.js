@@ -35,7 +35,7 @@ const getGithubUser = async (accessToken) => {
   const githubUserResponse = await fetch(`${GITHUB_API}/user`, {
     headers: githubHeaders(accessToken),
   });
-  if (!githubUserResponse) {
+  if (!githubUserResponse.ok) {
     throw new Error("Failed to get Github user");
   }
 
