@@ -8,7 +8,8 @@ import WorkSpace from "./pages/WorkSpace";
 import SignPage from "./pages/signPages/SignPage";
 import Profile from "./pages/userUtilityPages/Profile";
 import Setting from "./pages/userUtilityPages/Setting";
-import CreateRepo from "./pages/CreateRepo";
+import CreateStatic from "./pages/create/CreateStatic";
+import CreateWebService from "./pages/create/CreateWebService";
 import Repository from "./pages/Repository";
 
 const appRoutes: RouteObject[] = [
@@ -47,8 +48,12 @@ const appRoutes: RouteObject[] = [
         element: <Profile />,
       },
       {
-        path: "/create",
-        element: <CreateRepo />,
+        path: "static",
+        element: <CreateStatic />,
+      },
+      {
+        path: "webservice",
+        element: <CreateWebService />,
       },
     ],
   },
