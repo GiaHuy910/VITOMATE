@@ -88,7 +88,7 @@ const Header = () => {
         {user && (
           <div className="dropdown ms-2">
             <button
-              className="btn btn-secondary dropdown-toggle d-flex flex-row"
+              className="btn btn-secondary d-flex flex-row"
               type="button"
               id="dropdownMenuButton1"
               data-bs-toggle="dropdown"
@@ -100,6 +100,10 @@ const Header = () => {
                 className="user-avatar-small"
               />
               {user.displayname}
+              <div
+                className="ps-1 dropdown-toggle"
+                style={{ color: "white" }}
+              ></div>
             </button>
 
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">

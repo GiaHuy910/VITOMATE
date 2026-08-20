@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 
 type Props = { onSignUp: () => void };
+
 const baseApi = "http://localhost:3001/auth";
 
 const SignInForm = ({ onSignUp }: Props) => {
