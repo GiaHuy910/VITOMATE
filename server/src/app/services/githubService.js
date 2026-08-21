@@ -1,3 +1,5 @@
+const { parseGithubRepoUrl } = require("../../utils/github");
+
 const GITHUB_API = "https://api.github.com";
 
 const githubHeaders = (accessToken) => ({
@@ -74,9 +76,35 @@ const getGithubUserInfo = async (code) => {
   };
 };
 
+const getGithubRepo = async (owner, repo) => {
+  const response = await fetch(
+    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+      },
+    },
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to check GitHub repository");
+  }
+  return response.json();
+};
+const validateGithubRepo = async (repoUrl) => {
+  const { owner, repo } = parseGithubRepoUrl(repoUrl);
+  const repository = await getGithubRepo(owner, repo);
+  if (!repository) {
+    throw new Error("GitHub repository does not exist or it has been private");
+  }
+  return repository;
+};
 module.exports = {
   getGithubAccessToken,
   getGithubUser,
   getGithubEmail,
   getGithubUserInfo,
+  validateGithubRepo,
 };
