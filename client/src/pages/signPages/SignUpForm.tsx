@@ -1,8 +1,7 @@
 import { useState } from "react";
+import { signUpUser } from "../../api/auth";
 
 type Props = { onSignIn: () => void };
-
-const baseApi = "http://localhost:3001/auth";
 
 const SignUpForm = ({ onSignIn }: Props) => {
   const [errors, setErrors] = useState({
@@ -116,32 +115,13 @@ const SignUpForm = ({ onSignIn }: Props) => {
         : "You must agree to the terms and conditions.",
     };
     setErrors(newErrors);
-
     const hasError = Object.values(newErrors).some((message) => message !== "");
-
     if (hasError) {
       setError("All information is required !");
       return;
     }
 
-    const signUpData = {
-      username: fields.username,
-      email: fields.email,
-      password: fields.password,
-    };
-
-    fetch(`${baseApi}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(signUpData),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Signup failed");
-        }
-        return data;
-      })
+    signUpUser(fields.username, fields.email, fields.password)
       .then(() => {
         onSignIn();
       })
