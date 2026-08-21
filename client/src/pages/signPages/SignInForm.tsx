@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/useAuth";
+import { getGithubUrl, signInUser } from "../../api/auth";
 
 type Props = { onSignUp: () => void };
-
-const baseApi = "http://localhost:3001/auth";
 
 const SignInForm = ({ onSignUp }: Props) => {
   const navigate = useNavigate();
@@ -53,10 +52,10 @@ const SignInForm = ({ onSignUp }: Props) => {
     }
   };
   const handleSignWithGithub = () => {
-    window.location.href = `${baseApi}/github`;
+    window.location.href = getGithubUrl();
   };
 
-  const handleSignIn = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -65,39 +64,19 @@ const SignInForm = ({ onSignUp }: Props) => {
       password: validatePassword(fields.password),
     };
     setErrors(newErrors);
-
     const hasError = Object.values(newErrors).some((message) => message !== "");
-
     if (hasError) {
       setError("All information is required !");
       return;
     }
 
-    const signInData = {
-      email: fields.email,
-      password: fields.password,
-    };
-
-    fetch(`${baseApi}/signin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(signInData),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Sign in failed");
-        }
-        return data;
-      })
-      .then((data) => {
-        setUser(data.user);
-        navigate("/");
-      })
-      .catch((error) => {
-        setError(error.message);
-      });
+    try {
+      const data = await signInUser(fields.email, fields.password);
+      setUser(data.user);
+      navigate("/");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Sign in failed");
+    }
   };
 
   return (
