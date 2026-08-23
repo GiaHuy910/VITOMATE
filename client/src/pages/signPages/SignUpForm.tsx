@@ -1,8 +1,7 @@
 import { useState } from "react";
+import { signUpUser } from "../../api/auth";
 
 type Props = { onSignIn: () => void };
-
-const baseApi = "http://localhost:3001/auth";
 
 const SignUpForm = ({ onSignIn }: Props) => {
   const [errors, setErrors] = useState({
@@ -116,32 +115,13 @@ const SignUpForm = ({ onSignIn }: Props) => {
         : "You must agree to the terms and conditions.",
     };
     setErrors(newErrors);
-
     const hasError = Object.values(newErrors).some((message) => message !== "");
-
     if (hasError) {
       setError("All information is required !");
       return;
     }
 
-    const signUpData = {
-      username: fields.username,
-      email: fields.email,
-      password: fields.password,
-    };
-
-    fetch(`${baseApi}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(signUpData),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Signup failed");
-        }
-        return data;
-      })
+    signUpUser(fields.username, fields.email, fields.password)
       .then(() => {
         onSignIn();
       })
@@ -157,7 +137,7 @@ const SignUpForm = ({ onSignIn }: Props) => {
           <div className="col-12 d-flex justify-content-center">
             <form
               onSubmit={handleSignUp}
-              className="sign-form p-4 p-md-5 bg-white border rounded shadow-sm"
+              className="sign-form p-4 p-md-5 border rounded shadow-sm"
             >
               <h2 className="fw-bold text-center mb-4">CREATE YOUR ACCOUNT</h2>
               <div className="form-group mb-3">
@@ -262,11 +242,11 @@ const SignUpForm = ({ onSignIn }: Props) => {
               {/* error */}
               {error && <p className="text-danger mb-3">{error}</p>}
 
-              <button type="submit" className="btn btn-primary w-100">
+              <button type="submit" className="btn btn-primary w-100 my-2">
                 SIGN UP
               </button>
-              <span>
-                Got an account?{" "}
+              <div className="d-flex pt-2">
+                <div className="pe-2"> Got an account?</div>
                 <button
                   type="button"
                   onClick={onSignIn}
@@ -274,7 +254,7 @@ const SignUpForm = ({ onSignIn }: Props) => {
                 >
                   SIGN IN
                 </button>
-              </span>
+              </div>
             </form>
           </div>
         </div>

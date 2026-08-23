@@ -9,7 +9,7 @@ const { uploadToCloudinary } = require("../services/cloudinaryService");
 
 class UsersController {
   //[GET] /users/me
-  async me(req, res, next) {
+  async me(req, res) {
     try {
       const userId = req.user.userId;
       const user = await User.findOne(
@@ -28,7 +28,7 @@ class UsersController {
     }
   }
   //[PATCH] /users/me
-  async updateUser(req, res, next) {
+  async updateUser(req, res) {
     try {
       const userId = req.user.userId;
       const { displayname, username, email } = req.body;
@@ -64,8 +64,40 @@ class UsersController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
+  //[PATCH] /users/me/theme
+  async updateUserTheme(req, res) {
+    try {
+      const { theme } = req.body;
+      const userId = req.user.userId;
+      if (!["Light", "Dark", "System"].includes(theme)) {
+        return res.status(400).json({
+          message: "Invalid theme",
+        });
+      }
+
+      const user = await User.findOneAndUpdate(
+        { userId },
+        { theme },
+        { returnDocument: "after" },
+      );
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Theme updated",
+        theme: user.theme,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  }
   //[PATCH] /users/me/avatar
-  async updateUserAvatar(req, res, next) {
+  async updateUserAvatar(req, res) {
     try {
       const userId = req.user.userId;
       const user = await User.findOne({ userId });
@@ -113,7 +145,7 @@ class UsersController {
     }
   }
   //[DELETE] /users/me/avatar
-  async deleteUserAvatar(req, res, next) {
+  async deleteUserAvatar(req, res) {
     try {
       const userId = req.user.userId;
       const user = await User.findOne({ userId });

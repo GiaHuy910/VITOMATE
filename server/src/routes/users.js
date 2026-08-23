@@ -12,6 +12,7 @@ router.patch(
   upload.single("avatar"),
   usersController.updateUserAvatar,
 );
+router.patch("/me/theme", authenticate, usersController.updateUserTheme);
 router.patch("/me", authenticate, usersController.updateUser);
 router.get("/me", authenticate, usersController.me);
 
