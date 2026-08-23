@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../contexts/useAuth";
+import { useAuth } from "../../contexts/auth/useAuth";
 import { getGithubUrl, signInUser } from "../../api/auth";
 
 type Props = { onSignUp: () => void };
@@ -86,7 +86,7 @@ const SignInForm = ({ onSignUp }: Props) => {
           <div className="col-12 d-flex justify-content-center">
             <form
               onSubmit={handleSignIn}
-              className="sign-form p-4 p-md-5 bg-white border rounded shadow-sm"
+              className="sign-form my-5 p-4 p-md-5 border rounded shadow-sm"
             >
               <h2 className="fw-bold text-center mb-4">SIGN IN</h2>
               <div className="form-group mb-3">
@@ -121,7 +121,7 @@ const SignInForm = ({ onSignUp }: Props) => {
               </div>
               {error && <div className="invalid-feedback d-block">{error}</div>}
               <div>
-                <button type="submit" className="btn btn-primary w-100">
+                <button type="submit" className="btn btn-primary w-100 my-2">
                   SIGN UP
                 </button>
                 <span>
@@ -129,16 +129,28 @@ const SignInForm = ({ onSignUp }: Props) => {
                   <button
                     type="button"
                     onClick={onSignUp}
-                    className="btn btn-link p-0"
+                    className="btn btn-link p-0 my-2"
                   >
                     SIGN UP
                   </button>
                 </span>
               </div>
-              <div className="sign-with-github d-flex justify-content-center">
-                {" "}
-                <button type="button" onClick={handleSignWithGithub}>
+              <div className="d-flex justify-content-center">
+                <button
+                  type="button"
+                  className="btn btn-secondary my-2"
+                  onClick={handleSignWithGithub}
+                >
                   Continue with GitHub
+                </button>
+              </div>
+              <div className="d-flex justify-content-center">
+                <button
+                  type="button"
+                  className="btn btn-secondary mt-2"
+                  onClick={handleSignWithGithub}
+                >
+                  Continue with Google
                 </button>
               </div>
             </form>

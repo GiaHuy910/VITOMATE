@@ -61,12 +61,12 @@ const CreateStatic = () => {
   };
 
   return (
-    <div className="container-fluid mt-3 px-5">
-      <div className="row ">
+    <div className="container-fluid mt-3 px-5 border">
+      <div className="row text-dark">
         <h1>Create Static Site</h1>
       </div>
       <div className="row mt-4 " style={{ marginBottom: "80px" }}>
-        <div className="col-12 col-md-4 ">
+        <div className="col-12 col-md-4 text-dark">
           <h5>Source code</h5>
         </div>
         <div className="col-12 col-md-8 ">
@@ -75,14 +75,14 @@ const CreateStatic = () => {
               <button
                 type="button"
                 onClick={handleGitProvider}
-                className="h-100 btn btn-light  rounded-0"
+                className={`h-100 btn ${selected === "gitprovider" ? "btn-dark" : " btn btn-light"} border rounded-0`}
               >
                 Git Provider
               </button>
               <button
                 type="button"
                 onClick={handlePublicGitRepo}
-                className="h-100 btn btn-light  rounded-0"
+                className={`h-100 btn ${selected === "publicgitrepo" ? "btn-dark" : " btn btn-light"} border rounded-0`}
               >
                 Public Git Repository
               </button>
@@ -153,7 +153,7 @@ const CreateStatic = () => {
           </div>
           <div className=" my-5 ">
             <button
-              className="btn btn-dark btn-lg rounded-0"
+              className="btn btn-secondary btn-lg rounded-0"
               onClick={handleDeploy}
             >
               Deploy

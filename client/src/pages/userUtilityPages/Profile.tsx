@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import { userUtilityPage } from "./index";
-import { useAuth } from "../../contexts/useAuth";
+import { useAuth } from "../../contexts/auth/useAuth";
 import ProfileField from "../../components/ProfileFieldProps";
 import AvatarField from "../../components/AvatarField";
 import {
@@ -144,7 +144,7 @@ const Profile = () => {
           <div className="card rounded-0">
             <div className="card-body">
               <h5>Account</h5>
-              <div className="d-grid gap-2">
+              <div className="d-grid gap-2 mb-3">
                 {userUtilityPage.map((page) => (
                   <Link
                     className="dropdown-item"
@@ -156,7 +156,7 @@ const Profile = () => {
                 ))}
               </div>
               <h5>Placeholder Name</h5>
-              <div className="d-grid gap-2">
+              <div className="d-grid gap-2 mb-3">
                 {userUtilityPage.map((page) => (
                   <Link
                     className="dropdown-item"

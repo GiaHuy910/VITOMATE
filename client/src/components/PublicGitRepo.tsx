@@ -52,8 +52,10 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
     setError(validateGitUrl(valueUrl));
   };
   return (
-    <div>
-      <div className="fs-6">Only public Github repository can be access.</div>
+    <div className="">
+      <div className="fs-6 text-dark ">
+        Only public Github repository can be access.
+      </div>
       <div className="d-flex border">
         <i className="bi bi-globe d-flex align-items-center mx-2"></i>
         <input

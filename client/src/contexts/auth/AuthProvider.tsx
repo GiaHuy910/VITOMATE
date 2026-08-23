@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthContext, type User } from "./AuthContext";
-import { logOutUser, getCurrentUser } from "../api/auth";
+import { logOutUser, getCurrentUser } from "../../api/auth";
 
 type Props = {
   children: ReactNode;
