@@ -114,6 +114,7 @@ class AuthController {
           avatar: {
             url: user.avatar.url,
           },
+          theme: user.theme,
         },
       });
     } catch (error) {

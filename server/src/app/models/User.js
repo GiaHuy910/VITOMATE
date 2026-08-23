@@ -26,6 +26,11 @@ const UserSchema = new Schema(
       },
     },
     encryptedToken: { type: String, required: false },
+    theme: {
+      type: String,
+      enum: ["Light", "Dark", "System"],
+      default: "Light",
+    },
   },
   { timestamps: true },
 );
