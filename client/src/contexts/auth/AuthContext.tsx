@@ -1,5 +1,7 @@
 import { createContext } from "react";
 
+type ThemeType = "Light" | "Dark" | "System";
+
 export type User = {
   displayname: string;
   userId: number;
@@ -8,6 +10,7 @@ export type User = {
   avatar: {
     url: string | null;
   };
+  theme: ThemeType;
 };
 
 export type AuthContextType = {

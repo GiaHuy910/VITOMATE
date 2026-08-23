@@ -1,3 +1,5 @@
+import { type ThemeType } from "../contexts/theme/ThemeContext";
+
 const baseApi = "http://localhost:3001/users";
 
 export const getCurrentUser = async () => {
@@ -56,6 +58,23 @@ export const deleteAvatar = async () => {
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.message || "Delete avatar failed");
+  }
+
+  return data;
+};
+
+export const updateTheme = async (theme: ThemeType) => {
+  const response = await fetch(`${baseApi}/me/theme`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ theme }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Upload avatar failed");
   }
 
   return data;

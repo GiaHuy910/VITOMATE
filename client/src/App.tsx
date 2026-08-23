@@ -11,6 +11,8 @@ import Setting from "./pages/userUtilityPages/Setting";
 import CreateStatic from "./pages/create/CreateStatic";
 import CreateWebService from "./pages/create/CreateWebService";
 import Repository from "./pages/Repository";
+import Account from "./components/settings/general/Account";
+import Theme from "./components/settings/general/Theme";
 
 const appRoutes: RouteObject[] = [
   {
@@ -42,6 +44,20 @@ const appRoutes: RouteObject[] = [
       {
         path: "/setting",
         element: <Setting />,
+        children: [
+          {
+            index: true,
+            element: <Account />,
+          },
+          {
+            path: "general/theme",
+            element: <Theme />,
+          },
+          {
+            path: "general/account",
+            element: <Account />,
+          },
+        ],
       },
       {
         path: "/profile",

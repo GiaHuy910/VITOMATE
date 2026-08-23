@@ -1,4 +1,4 @@
-import { useAuth } from "../contexts/useAuth";
+import { useAuth } from "../contexts/auth/useAuth";
 
 const Repository = () => {
   const { user, loading } = useAuth();
