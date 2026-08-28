@@ -1,25 +1,22 @@
 const express = require("express");
+const dotenv = require("dotenv");
 
 const config = require("./config");
-
-const vmRouter = require("./routes/vm.routes");
-const agentRouter = require("./routes/agent.routes");
+const route = require("./routes");
+const { reassignTimedOutDeployJobs } = require("./services/buildJobService");
+const db = require("./config/db/mongodb");
 
 const app = express();
 
+//connect to env
+dotenv.config();
+
+// Connect to the database
+db.connect();
+
 app.use(express.json());
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    service: "vitomate-platform",
-    status: "ok",
-  });
-});
-
-app.use("/api/vms", vmRouter);
-
-app.use("/api/agents", agentRouter);
+route(app);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -27,6 +24,12 @@ app.use((req, res) => {
     message: "Route not found",
   });
 });
+
+setInterval(() => {
+  reassignTimedOutDeployJobs(30).catch((err) =>
+    console.error("[Watchdog Error]:", err.message),
+  );
+}, 10000);
 
 app.listen(config.port, () => {
   console.log(`VITOMATE Platform is running on port ${config.port}`);
