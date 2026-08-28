@@ -25,12 +25,6 @@ const UserSchema = new Schema(
         default: null,
       },
     },
-    encryptedToken: { type: String, required: false },
-    theme: {
-      type: String,
-      enum: ["Light", "Dark", "System"],
-      default: "Light",
-    },
   },
   { timestamps: true },
 );

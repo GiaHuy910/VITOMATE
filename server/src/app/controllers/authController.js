@@ -3,8 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
-const { createJwt, verifyJwt } = require("../../utils/jwt");
-const { createCbc } = require("../../utils/cbc");
+const { createToken, verifyToken } = require("../../utils/jwt");
 
 class AuthController {
   //[POST] /auth/signup
@@ -71,7 +70,7 @@ class AuthController {
       }
 
       //Jwt,session o day
-      const token = createJwt(user.userId);
+      const token = createToken(user.userId);
 
       res.cookie("token", token, {
         httpOnly: true,
@@ -114,7 +113,6 @@ class AuthController {
           avatar: {
             url: user.avatar.url,
           },
-          theme: user.theme,
         },
       });
     } catch (error) {
@@ -153,9 +151,6 @@ class AuthController {
       }
 
       const githubUser = await getGithubUserInfo(code);
-      const accessToken = githubUser.accessToken;
-      //ma hoa cbc
-      const encryptedCbc = createCbc(accessToken);
 
       let user = await User.findOne({
         githubId: githubUser.githubId,
@@ -179,18 +174,17 @@ class AuthController {
             githubId: githubUser.githubId,
             username: githubUser.username,
             email: githubUser.email,
-            encryptedToken: encryptedCbc,
           });
         }
       }
-      const token = createJwt(user.userId);
+      const token = createToken(user.userId);
       res.cookie("token", token, {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
         maxAge: 60 * 60 * 1000, //1 gio
       });
-      return res.redirect(`http://localhost:5173/dashboard`);
+      return res.redirect(`http://localhost:5173/`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 

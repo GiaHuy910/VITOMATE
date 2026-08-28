@@ -1,4 +1,4 @@
-import { useAuth } from "../contexts/auth/useAuth";
+import { useAuth } from "../contexts/useAuth";
 
 const WorkSpace = () => {
   const { user, loading } = useAuth();
@@ -7,7 +7,9 @@ const WorkSpace = () => {
     <div className="flex-basic-between">
       <h1>WORKSPACE</h1>
 
-      {user ? (
+      {loading ? (
+        <p>Loading...</p>
+      ) : user ? (
         <h2>Welcome, {user.username}</h2>
       ) : (
         <p>You have not signed in yet!</p>

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../contexts/auth/useAuth";
-import { getGithubUrl, signInUser } from "../../api/auth";
+import { useAuth } from "../../contexts/useAuth";
 
 type Props = { onSignUp: () => void };
+const baseApi = "http://localhost:3001/auth";
 
 const SignInForm = ({ onSignUp }: Props) => {
   const navigate = useNavigate();
@@ -52,10 +52,10 @@ const SignInForm = ({ onSignUp }: Props) => {
     }
   };
   const handleSignWithGithub = () => {
-    window.location.href = getGithubUrl();
+    window.location.href = `${baseApi}/github`;
   };
 
-  const handleSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSignIn = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -64,19 +64,39 @@ const SignInForm = ({ onSignUp }: Props) => {
       password: validatePassword(fields.password),
     };
     setErrors(newErrors);
+
     const hasError = Object.values(newErrors).some((message) => message !== "");
+
     if (hasError) {
       setError("All information is required !");
       return;
     }
 
-    try {
-      const data = await signInUser(fields.email, fields.password);
-      setUser(data.user);
-      navigate("/");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Sign in failed");
-    }
+    const signInData = {
+      email: fields.email,
+      password: fields.password,
+    };
+
+    fetch(`${baseApi}/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(signInData),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Sign in failed");
+        }
+        return data;
+      })
+      .then((data) => {
+        setUser(data.user);
+        navigate("/");
+      })
+      .catch((error) => {
+        setError(error.message);
+      });
   };
 
   return (
@@ -86,7 +106,7 @@ const SignInForm = ({ onSignUp }: Props) => {
           <div className="col-12 d-flex justify-content-center">
             <form
               onSubmit={handleSignIn}
-              className="sign-form my-5 p-4 p-md-5 border rounded shadow-sm"
+              className="sign-form p-4 p-md-5 bg-white border rounded shadow-sm"
             >
               <h2 className="fw-bold text-center mb-4">SIGN IN</h2>
               <div className="form-group mb-3">
@@ -121,7 +141,7 @@ const SignInForm = ({ onSignUp }: Props) => {
               </div>
               {error && <div className="invalid-feedback d-block">{error}</div>}
               <div>
-                <button type="submit" className="btn btn-primary w-100 my-2">
+                <button type="submit" className="btn btn-primary w-100">
                   SIGN UP
                 </button>
                 <span>
@@ -129,28 +149,16 @@ const SignInForm = ({ onSignUp }: Props) => {
                   <button
                     type="button"
                     onClick={onSignUp}
-                    className="btn btn-link p-0 my-2"
+                    className="btn btn-link p-0"
                   >
                     SIGN UP
                   </button>
                 </span>
               </div>
-              <div className="d-flex justify-content-center">
-                <button
-                  type="button"
-                  className="btn btn-secondary my-2"
-                  onClick={handleSignWithGithub}
-                >
+              <div className="sign-with-github d-flex justify-content-center">
+                {" "}
+                <button type="button" onClick={handleSignWithGithub}>
                   Continue with GitHub
-                </button>
-              </div>
-              <div className="d-flex justify-content-center">
-                <button
-                  type="button"
-                  className="btn btn-secondary mt-2"
-                  onClick={handleSignWithGithub}
-                >
-                  Continue with Google
                 </button>
               </div>
             </form>

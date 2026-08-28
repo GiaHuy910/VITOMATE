@@ -8,11 +8,6 @@ import WorkSpace from "./pages/WorkSpace";
 import SignPage from "./pages/signPages/SignPage";
 import Profile from "./pages/userUtilityPages/Profile";
 import Setting from "./pages/userUtilityPages/Setting";
-import CreateStatic from "./pages/create/CreateStatic";
-import CreateWebService from "./pages/create/CreateWebService";
-import Repository from "./pages/Repository";
-import Account from "./components/settings/general/Account";
-import Theme from "./components/settings/general/Theme";
 
 const appRoutes: RouteObject[] = [
   {
@@ -20,18 +15,8 @@ const appRoutes: RouteObject[] = [
     element: <MainLayout />,
     children: [
       {
-        path: "/dashboard",
+        index: true,
         element: <DashBoard />,
-        children: [
-          {
-            index: true,
-            element: <DashBoard />,
-          },
-          {
-            path: ":id",
-            element: <Repository />,
-          },
-        ],
       },
       {
         path: "/sign",
@@ -44,32 +29,10 @@ const appRoutes: RouteObject[] = [
       {
         path: "/setting",
         element: <Setting />,
-        children: [
-          {
-            index: true,
-            element: <Account />,
-          },
-          {
-            path: "general/theme",
-            element: <Theme />,
-          },
-          {
-            path: "general/account",
-            element: <Account />,
-          },
-        ],
       },
       {
         path: "/profile",
         element: <Profile />,
-      },
-      {
-        path: "static",
-        element: <CreateStatic />,
-      },
-      {
-        path: "webservice",
-        element: <CreateWebService />,
       },
     ],
   },
@@ -82,7 +45,7 @@ const router = createBrowserRouter([
 const App = () => {
   return (
     <Suspense>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} />;
     </Suspense>
   );
 };
