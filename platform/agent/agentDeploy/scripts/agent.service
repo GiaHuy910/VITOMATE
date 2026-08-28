@@ -1,0 +1,16 @@
+[Unit]
+Description=Deploy Agent Worker Service
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=hoang
+WorkingDirectory=/opt/agent
+ExecStart=/usr/bin/node /opt/agent/src/index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

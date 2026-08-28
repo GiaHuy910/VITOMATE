@@ -15,6 +15,22 @@ const UserSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    avatar: {
+      url: {
+        type: String,
+        default: null,
+      },
+      publicId: {
+        type: String,
+        default: null,
+      },
+    },
+    encryptedToken: { type: String, required: false },
+    theme: {
+      type: String,
+      enum: ["Light", "Dark", "System"],
+      default: "Light",
+    },
   },
   { timestamps: true },
 );

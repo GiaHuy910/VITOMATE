@@ -1,20 +1,36 @@
-// import { useAuth } from "../../contexts/useAuth";
 import { Link } from "react-router-dom";
-import { userUtilityPage } from "./index";
 import { useEffect, useState } from "react";
 
-import placeholderImage from "../../assets/placeholder.jpg";
-
-const baseApi = "http://localhost:3001/users";
+import { userUtilityPage } from "./index";
+import { useAuth } from "../../contexts/auth/useAuth";
+import ProfileField from "../../components/ProfileFieldProps";
+import AvatarField from "../../components/AvatarField";
+import {
+  getCurrentUser,
+  uploadAvatar,
+  deleteAvatar,
+  updateUser,
+} from "../../api/users";
 
 type ProfileUser = {
+  userId: number;
+  displayname: string;
+  username: string;
+  email: string;
+  avatar: {
+    url: string | null;
+    publicId: string | null;
+  };
+};
+
+type ProfileFormData = {
   displayname: string;
   username: string;
   email: string;
 };
 
 const Profile = () => {
-  // const { user, loading } = useAuth();
+  const { setUser: setAuthUser } = useAuth();
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [editing, setEditing] = useState({
     displayname: false,
@@ -22,53 +38,91 @@ const Profile = () => {
     email: false,
   });
 
-  const [formData, setFormData] = useState<ProfileUser>({
+  const [formData, setFormData] = useState<ProfileFormData>({
     displayname: "",
     username: "",
     email: "",
   });
+  const profileFields = [
+    {
+      key: "displayname",
+      label: "Display Name",
+    },
+    {
+      key: "username",
+      label: "User Name",
+    },
+    {
+      key: "email",
+      label: "Email",
+    },
+  ] as const;
 
-  const handleSave = async (field: keyof ProfileUser) => {
-    // Không cho save nếu giá trị không thay đổi
+  const handleCancel = (field: keyof ProfileFormData) => {
+    if (!user) return;
+    setFormData((prev) => ({ ...prev, [field]: user[field] }));
+    setEditing((prev) => ({ ...prev, [field]: false }));
+  };
+  const syncUser = (updatedUser: ProfileUser) => {
+    setUser(updatedUser);
+    setAuthUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            displayname: updatedUser.displayname,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            avatar: {
+              url: updatedUser.avatar.url,
+            },
+          }
+        : prev,
+    );
+  };
+
+  const handleSave = async (field: keyof ProfileFormData) => {
     if (formData[field] === user?.[field]) {
       return;
     }
     try {
-      const response = await fetch(`${baseApi}/me`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          [field]: formData[field],
-        }),
-      });
+      const data = await updateUser(field, formData[field]);
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Update failed");
-      }
+      syncUser(data.user);
 
-      setUser(data.user);
-      setEditing({
-        ...editing,
+      setEditing((prev) => ({
+        ...prev,
         [field]: false,
-      });
+      }));
     } catch (error) {
       console.log(error);
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await uploadAvatar(file);
+
+      syncUser(data.user);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const data = await deleteAvatar();
+
+      syncUser(data.user);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    fetch(`${baseApi}/me`, { credentials: "include" })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message);
-        }
-        return data;
-      })
+    getCurrentUser()
       .then((data) => {
         setUser(data.user);
         setFormData({
@@ -90,7 +144,7 @@ const Profile = () => {
           <div className="card rounded-0">
             <div className="card-body">
               <h5>Account</h5>
-              <div className="d-grid gap-2">
+              <div className="d-grid gap-2 mb-3">
                 {userUtilityPage.map((page) => (
                   <Link
                     className="dropdown-item"
@@ -102,7 +156,7 @@ const Profile = () => {
                 ))}
               </div>
               <h5>Placeholder Name</h5>
-              <div className="d-grid gap-2">
+              <div className="d-grid gap-2 mb-3">
                 {userUtilityPage.map((page) => (
                   <Link
                     className="dropdown-item"
@@ -122,148 +176,34 @@ const Profile = () => {
             <div className="card-body px-5">
               <h3>Profile details </h3>
               <div className="card-body border rounded-0">
-                <div className="row align-items-start mb-4">
-                  <div className="col-md-4 pe-md-4">
-                    <div>Display Name</div>
-                  </div>
-                  <div className="col-md-8">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.displayname}
-                      disabled={!editing.displayname}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          displayname: e.target.value,
-                        })
-                      }
-                    />
-                    <div className="d-flex">
-                      {editing.displayname ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.displayname === user?.displayname}
-                          onClick={() => handleSave("displayname")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-secondary ms-auto"
-                          onClick={() =>
-                            setEditing({ ...editing, displayname: true })
-                          }
-                        >
-                          <i className="bi bi-pencil-square pe-1"></i>
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="row align-items-start mb-4">
-                  <div className="col-md-4 pe-md-4">
-                    <div>User Name</div>
-                  </div>
-                  <div className="col-md-8">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.username}
-                      disabled={!editing.username}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          username: e.target.value,
-                        })
-                      }
-                    />
-                    <div className="d-flex">
-                      {editing.username ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.username === user?.username}
-                          onClick={() => handleSave("username")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-secondary ms-auto"
-                          onClick={() =>
-                            setEditing({ ...editing, username: true })
-                          }
-                        >
-                          <i className="bi bi-pencil-square pe-1"></i>
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="row align-items-start mb-4">
-                  <div className="col-md-4 pe-md-4">
-                    <div>Emails</div>
-                  </div>
-                  <div className="col-md-8">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.email}
-                      disabled={!editing.email}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          email: e.target.value,
-                        })
-                      }
-                    />
-                    <div className="d-flex">
-                      {editing.email ? (
-                        <button
-                          className="btn btn-success ms-auto"
-                          disabled={formData.email === user?.email}
-                          onClick={() => handleSave("email")}
-                        >
-                          <i className="bi bi-check-lg pe-1"></i>
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-secondary ms-auto"
-                          onClick={() =>
-                            setEditing({ ...editing, email: true })
-                          }
-                        >
-                          <i className="bi bi-pencil-square pe-1"></i>
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="row align-items-start">
-                  <div className="col-md-4 pe-md-4">
-                    <div>Avatar</div>
-                  </div>
-                  <div className="d-flex flex-column align-items-start col-md-8 ">
-                    <img
-                      src={placeholderImage}
-                      alt="placeholderImage"
-                      className="user-avatar-big"
-                    />
-                    <div style={{ paddingInlineStart: "5px" }}>
-                      {" "}
-                      <button className="btn btn-secondary">
-                        {" "}
-                        <i className="bi bi-pencil-square pe-1"></i>Edit
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                {profileFields.map(({ key, label }) => (
+                  <ProfileField
+                    key={key}
+                    label={label}
+                    value={formData[key]}
+                    editing={editing[key]}
+                    canSave={formData[key] !== user?.[key]}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        [key]: value,
+                      })
+                    }
+                    onEdit={() =>
+                      setEditing({
+                        ...editing,
+                        [key]: true,
+                      })
+                    }
+                    onCancel={() => handleCancel(key)}
+                    onSave={() => handleSave(key)}
+                  />
+                ))}
+                <AvatarField
+                  avatar={user?.avatar}
+                  onUpLoad={handleAvatarChange}
+                  onDelete={handleDeleteAvatar}
+                />
               </div>
             </div>
           </div>
