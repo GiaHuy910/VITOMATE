@@ -42,7 +42,10 @@ async function getNextJob() {
   const job = await Job.findOneAndUpdate(
     { status: "PENDING" },
     { $set: { status: "BUILDING" } },
-    { sort: { createdAt: 1 }, new: true },
+    {
+      sort: { createdAt: 1 },
+      returnDocument: "after", // Thay thế cho { new: true }
+    },
   );
 
   if (!job) return null;
@@ -95,7 +98,9 @@ const handleBuilderCallback = async (callbackData) => {
       { jobId },
       { $set: { status: "BUILT", imageTag, logs } },
     );
-    throw new Error("Không tìm thấy Deploy Worker nào sẵn sàng để triển khai!");
+    console.warn(
+      `[BuildJobService] Job [${jobId}] đã lưu trạng thái BUILT nhưng chưa có Deploy Worker sẵn sàng.`,
+    );
   }
 
   // 3. Gán Job cho Deploy Worker vừa tìm được & chuyển trạng thái DEPLOY_PENDING

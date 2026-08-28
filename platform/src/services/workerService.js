@@ -11,19 +11,19 @@ const getAllWorkers = async () => {
  * Tìm Worker theo workerId hoặc _id
  */
 const getWorkerById = async (id) => {
-  // Tìm theo workerId (string ID dạng 'worker-builder-01') trước, nếu không có thì tìm theo _id của Mongo
   return (
     (await Worker.findOne({ workerId: id })) ||
     (await Worker.findById(id).catch(() => null))
   );
 };
 
-// 1. Đăng ký / Cập nhật Worker (Hàm của bạn)
+// 1. Đăng ký / Cập nhật Worker
 const upsertWorker = async (workerData) => {
   const { workerId, ip, cpuCores, totalRamMb, freeDiskGb, role, status } =
     workerData;
 
-  const updateData = {
+  // 1. Chỉ đưa status vào $set nếu thực sự có truyền status
+  const setPayload = {
     ip,
     cpuCores,
     totalRamMb,
@@ -33,31 +33,36 @@ const upsertWorker = async (workerData) => {
   };
 
   if (status) {
-    updateData.status = status;
+    setPayload.status = status;
   }
 
+  // 2. Xóa trường 'status' ra khỏi $setOnInsert để tránh trùng lặp
   return await Worker.findOneAndUpdate(
     { workerId },
     {
-      $set: updateData,
-      $setOnInsert: { status: status || "READY", activeJobsCount: 0 },
+      $set: setPayload,
+      $setOnInsert: {
+        activeJobsCount: 0,
+        // Nếu không có status truyền lên thì mặc định mới đặt là READY
+        ...(status ? {} : { status: "READY" }),
+      },
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     },
   );
 };
 
-// 2. Tìm Worker phù hợp nhất để giao Job (Ưu tiên rảnh việc + RAM lớn)
+// 2. Tìm Worker phù hợp nhất để giao Job
 const findAvailableWorker = async (role) => {
   return await Worker.findOne({
     role,
     status: "READY",
   }).sort({
-    activeJobsCount: 1, // Máy ít Job hơn đứng trước
-    totalRamMb: -1, // Máy nhiều RAM hơn đứng trước
+    activeJobsCount: 1,
+    totalRamMb: -1,
   });
 };
 
@@ -66,7 +71,7 @@ const updateActiveJobs = async (workerId, increment = 1) => {
   return await Worker.findOneAndUpdate(
     { workerId },
     { $inc: { activeJobsCount: increment } },
-    { new: true },
+    { returnDocument: "after" }, // Sửa từ new: true
   );
 };
 
@@ -75,7 +80,7 @@ const updateHeartbeat = async (workerId) => {
   return await Worker.findOneAndUpdate(
     { workerId },
     { $set: { lastSeen: new Date() } },
-    { new: true },
+    { returnDocument: "after" }, // Sửa từ new: true
   );
 };
 
