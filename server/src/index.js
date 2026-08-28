@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-const cookiParser = require("cookie-parser");
 const dotenv = require("dotenv");
 
 //connect to env
@@ -11,7 +10,7 @@ const port = 3001;
 const app = express();
 
 const route = require("./routes");
-const db = require("./config/db");
+const db = require("./config/db/mongodb");
 const cookieParser = require("cookie-parser");
 
 //connect to db

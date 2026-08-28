@@ -3,7 +3,8 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
-const { createToken, verifyToken } = require("../../utils/jwt");
+const { createJwt, verifyJwt } = require("../../utils/jwt");
+const { createCbc } = require("../../utils/cbc");
 
 class AuthController {
   //[POST] /auth/signup
@@ -70,7 +71,7 @@ class AuthController {
       }
 
       //Jwt,session o day
-      const token = createToken(user.userId);
+      const token = createJwt(user.userId);
 
       res.cookie("token", token, {
         httpOnly: true,
@@ -85,6 +86,9 @@ class AuthController {
           userId: user.userId,
           username: user.username,
           email: user.email,
+          avatar: {
+            url: user.avatar.url,
+          },
         },
       });
     } catch (error) {
@@ -106,6 +110,11 @@ class AuthController {
         user: {
           displayname: user.displayname,
           username: user.username,
+          email: user.email,
+          avatar: {
+            url: user.avatar.url,
+          },
+          theme: user.theme,
         },
       });
     } catch (error) {
@@ -144,6 +153,9 @@ class AuthController {
       }
 
       const githubUser = await getGithubUserInfo(code);
+      const accessToken = githubUser.accessToken;
+      //ma hoa cbc
+      const encryptedCbc = createCbc(accessToken);
 
       let user = await User.findOne({
         githubId: githubUser.githubId,
@@ -167,19 +179,18 @@ class AuthController {
             githubId: githubUser.githubId,
             username: githubUser.username,
             email: githubUser.email,
+            encryptedToken: encryptedCbc,
           });
         }
       }
-      // 11. Tạo JWT của VITOMATE
-      const token = createToken(user.userId);
-      // Redirect về FE
+      const token = createJwt(user.userId);
       res.cookie("token", token, {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 60 * 60 * 1000, // 1 hour
+        maxAge: 60 * 60 * 1000, //1 gio
       });
-      return res.redirect(`http://localhost:5173/`);
+      return res.redirect(`http://localhost:5173/dashboard`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 

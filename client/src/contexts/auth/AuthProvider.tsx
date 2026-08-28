@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthContext, type User } from "./AuthContext";
-
-const baseApi = "http://localhost:3001/auth";
+import { logOutUser, getCurrentUser } from "../../api/auth";
 
 type Props = {
   children: ReactNode;
@@ -13,18 +12,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${baseApi}/me`, {
-      credentials: "include",
-    })
-      .then(async (res) => {
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Unauthorized");
-        }
-
-        return data;
-      })
+    getCurrentUser()
       .then(({ user }) => {
         setUser(user);
       })
@@ -37,12 +25,12 @@ export const AuthProvider = ({ children }: Props) => {
   }, []);
 
   const logout = async () => {
-    await fetch(`${baseApi}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    setUser(null);
+    try {
+      await logOutUser();
+      setUser(null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

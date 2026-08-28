@@ -1,29 +1,37 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth";
+import { useAuth } from "../contexts/auth/useAuth";
 
-import brandLogo from "../assets/brand-logo-small.png";
+import brandLogoLight from "../assets/brand-logo-small-light.png";
+import brandLogoDark from "../assets/brand-logo-small-dark.png";
 import placeholderImage from "../assets/placeholder.jpg";
 import { userUtilityPage } from "../pages/userUtilityPages";
+import { useTheme } from "../contexts/theme/useTheme";
 
 const nameLogo = "VITOMATE";
 
 const Header = () => {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const isDark =
+    theme === "Dark" ||
+    (theme === "System" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+
   const handleLogOut = () => {
     logout();
-    navigate("/");
+    navigate("/sign");
   };
   const handleLogo = () => {
-    navigate("/");
+    navigate("/dashboard");
   };
   const handleWorkSpace = () => {
     navigate("/workspace");
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
+    <nav className="navbar navbar-expand-lg bg-body fixed-top border">
       <div className="container-fluid">
         <div
           className="logo-container"
@@ -34,7 +42,7 @@ const Header = () => {
           onClick={handleLogo}
         >
           <img
-            src={brandLogo}
+            src={isDark ? brandLogoLight : brandLogoDark}
             alt={nameLogo}
             style={{ width: "90%", cursor: "pointer" }}
             className="logo-image img-fluid "
@@ -88,18 +96,22 @@ const Header = () => {
         {user && (
           <div className="dropdown ms-2">
             <button
-              className="btn btn-secondary dropdown-toggle"
+              className="btn btn-secondary d-flex align-items-center justify-content-end"
               type="button"
               id="dropdownMenuButton1"
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
               <img
-                src={placeholderImage}
+                src={user?.avatar.url || placeholderImage}
                 alt=""
                 className="user-avatar-small"
               />
-              {user.username}
+              {user.displayname}
+              <div
+                className="ps-1 dropdown-toggle"
+                style={{ color: "white" }}
+              ></div>
             </button>
 
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
