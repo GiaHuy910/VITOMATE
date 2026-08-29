@@ -45,7 +45,7 @@ export const deployRepository = async (body: deployForm) => {
     name: data.repository.name,
     branch: data.repository.defaultBranch,
   };
-  await fetch(`http://localhost:4000/api/projects/init`, {
+  await fetch(`http://localhost:4000/api/builders/init`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
