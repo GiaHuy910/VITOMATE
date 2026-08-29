@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 
 const config = require("./config");
 const route = require("./routes");
@@ -13,7 +14,7 @@ dotenv.config();
 
 // Connect to the database
 db.connect();
-
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 
 route(app);

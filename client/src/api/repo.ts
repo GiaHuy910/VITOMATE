@@ -43,7 +43,7 @@ export const deployRepository = async (body: deployForm) => {
     repo_id: data.repository.repo_id,
     owner: data.repository.owner,
     name: data.repository.name,
-    branch: data.repository.defaultBranch,
+    branch: data.repository.branch,
   };
   await fetch(`http://localhost:4000/api/builders/init`, {
     method: "POST",
