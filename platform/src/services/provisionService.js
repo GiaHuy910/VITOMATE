@@ -15,7 +15,7 @@ const bootstrapWorker = async (workerData, generatedWorkerId) => {
 
   // 2. Xác định thư mục agent tương ứng với role (agentBuilder hoặc agentDeploy)
   const agentFolder =
-    role?.toUpperCase() === "DEPLOY" ? "agentDeploy" : "agentBuilder";
+    role?.toUpperCase() === "DEPLOYER" ? "agentDeploy" : "agentBuilder";
   const resourcesDir = path.join(baseAgentDir, agentFolder);
 
   const targetworker = {
@@ -24,6 +24,7 @@ const bootstrapWorker = async (workerData, generatedWorkerId) => {
     port: Number(port) || Number(process.env.PORT_WORKER) || 22,
     username,
     password,
+    role: role,
     masterUrl,
     files: {
       // Trỏ đúng vào các file nằm trong agentBuilder / agentDeploy

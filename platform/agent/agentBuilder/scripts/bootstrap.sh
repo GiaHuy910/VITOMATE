@@ -7,7 +7,7 @@ WORKER_ID="${WORKER_ID:-worker-builder-01}"
 AGENT_ROLE="${AGENT_ROLE:-BUILDER}"
 
 MASTER_HOST=$(echo "$MASTER_URL" | sed -e 's|:[0-9]*$||' -e 's|^https*://||')
-REGISTRY_URL="${MASTER_HOST}:5000"
+REGISTRY_URL="${MASTER_HOST}:5001"
 
 echo "===> [0/5] Vô hiệu hóa và tiêu diệt tiến trình apt/dpkg ngầm..."
 export DEBIAN_FRONTEND=noninteractive
