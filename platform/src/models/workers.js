@@ -13,7 +13,7 @@ const workerSchema = new mongoose.Schema(
     // Phân loại vai trò
     role: {
       type: String,
-      enum: ["BUILDER", "DEPLOY"],
+      enum: ["BUILDER", "DEPLOYER"],
       required: true,
       index: true, // Đánh index để query tìm worker nhanh hơn
     },

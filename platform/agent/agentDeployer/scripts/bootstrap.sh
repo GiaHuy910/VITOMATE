@@ -7,7 +7,7 @@ WORKER_ID="${WORKER_ID:-worker-deploy-01}"
 AGENT_ROLE="${AGENT_ROLE:-DEPLOY}"
 
 MASTER_HOST=$(echo "$MASTER_URL" | sed -e 's|:[0-9]*$||' -e 's|^https*://||')
-REGISTRY_URL="${MASTER_HOST}:5000"
+REGISTRY_URL="${MASTER_HOST}:5001"
 
 echo "===> [0/5] Vô hiệu hóa và tiêu diệt tiến trình apt/dpkg ngầm..."
 export DEBIAN_FRONTEND=noninteractive
@@ -51,9 +51,15 @@ else
 EOF
 fi
 
-echo "===> [3/5] Kích hoạt Docker..."
+echo "===> [3/5] Kích hoạt Docker và Phân quyền Socket..."
 systemctl enable docker
 systemctl reload docker || systemctl restart docker || true
+
+# 🟢 CẤP QUYỀN TRUY CẬP DOCKER SOCKET TẠI ĐÂY
+chmod 666 /var/run/docker.sock || true
+if [ -n "$SUDO_USER" ]; then
+    usermod -aG docker "$SUDO_USER" 2>/dev/null || true
+fi
 
 echo "===> [4/5] Cấu hình thư mục chứa Agent và Service..."
 rm -rf "${INSTALL_DIR}"
