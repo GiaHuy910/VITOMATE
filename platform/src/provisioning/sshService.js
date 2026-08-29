@@ -72,9 +72,9 @@ class SSHService {
       // 2. Xác định thư mục Nguồn dựa trên Role (Default: BUILDER)
       const role = (vmConfig.role || vmConfig.type || "BUILDER").toUpperCase();
       const agentFolderName =
-        role === "DEPLOYER" ? "agentDeploy" : "agentBuilder";
+        role === "DEPLOYER" ? "agentDeployer" : "agentBuilder";
 
-      // Trỏ thẳng tới agentBuilder hoặc agentDeploy (Cấu trúc thư mục phẳng mới)
+      // Trỏ thẳng tới agentBuilder hoặc agentDeployer (Cấu trúc thư mục phẳng mới)
       const sourceAgentDir = path.join(
         __dirname,
         `../../agent/${agentFolderName}`,
