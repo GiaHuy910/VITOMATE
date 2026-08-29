@@ -37,7 +37,6 @@ class RepoController {
       const repo_id = await getNextRepoId();
 
       const repo = await Repo.create({
-        userId: user.userId,
         username: user.username,
         repo_id,
         github_repo_id: repositoryId,
