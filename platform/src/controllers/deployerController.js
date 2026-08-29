@@ -1,8 +1,8 @@
 const jobService = require("../services/buildJobService");
 
 /**
- * GET /api/deploys/poll?worker_id=xxx
- * Deploy Worker gọi mỗi 5s để lấy Job dành riêng cho mình
+ * GET /api/deployers/poll?worker_id=xxx
+ * Deployer Worker gọi mỗi 5s để lấy Job dành riêng cho mình
  */
 const pollJob = async (req, res) => {
   try {
@@ -20,7 +20,7 @@ const pollJob = async (req, res) => {
     }
 
     console.log(
-      `[Platform Master] Đã giao Deploy Job [${job.jobId}] cho Deploy Worker: ${worker_id}`,
+      `[Platform Master] Đã giao Deploy Job [${job.jobId}] cho Deployer Worker: ${worker_id}`,
     );
 
     return res.status(200).json({ success: true, job });
@@ -31,24 +31,29 @@ const pollJob = async (req, res) => {
 };
 
 /**
- * POST /api/deploys/complete
- * Deploy Worker gọi khi kéo Image và khởi chạy Container thành công
+ * POST /api/deployers/callback
+ * Deployer Worker gọi khi kéo Image và khởi chạy Container thành công
  */
-const completeJob = async (req, res) => {
+const callback = async (req, res) => {
   try {
-    const { jobId } = req.body;
+    const { jobId, success, error } = req.body;
 
     if (!jobId) {
-      return res.status(400).json({ success: false, error: "Thiếu jobId" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Thiếu jobId trong payload" });
     }
 
-    const updatedJob = await jobService.completeAndRemoveJob(jobId);
+    // 🟢 Truyền toàn bộ payload (bao gồm publicUrl, port, containerId, logs) vào Service
+    const updatedJob = await jobService.completeAndRemoveJob(req.body);
 
-    console.log(`[Platform Master] Job [${jobId}] đã hoàn tất thành công!`);
+    console.log(
+      `[Platform Master] Job [${jobId}] hoàn tất! Trạng thái: ${success ? "SUCCESS" : "FAILED"}`,
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Đã cập nhật trạng thái Job thành COMPLETED.",
+      message: "Đã cập nhật trạng thái Job thành công.",
       job: updatedJob,
     });
   } catch (error) {
@@ -59,5 +64,5 @@ const completeJob = async (req, res) => {
 
 module.exports = {
   pollJob,
-  completeJob,
+  callback,
 };
