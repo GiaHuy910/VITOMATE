@@ -44,13 +44,15 @@ Application Deployment
 
 - Deploy application
 - View deployment status
-- View logs
-<!-- Hoang b xem ben deploy cua b co cai gi ghi vo day -->
+- View logs (plan)
+- Bootstrap
 
 Storage Management
 
 - Storing users information
 - Storing application related information
+- storing docker images
+- Storing virtual machine workers information
   > Some features may still be under development as the project is currently in the coding phase.
 
 ## 5. Technology Stack
@@ -64,11 +66,13 @@ Storage Management
 
 - Node.js
 - Express
+- bash
 
 ### Database and Storage
 
 - MongoDB
 - Cloudinary
+- docker Hub (plan)
 
 ### Authentication
 
