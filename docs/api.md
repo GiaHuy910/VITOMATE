@@ -5,8 +5,7 @@
 **Backend api**
 BE_URL = http://localhost:3001/
 **Deployment api**
-
-<!--base url cua ban nua-->
+DE_URL = http://localhost:4000/
 
 ## Endpoints
 
@@ -35,6 +34,21 @@ POST BE_URL/repo/store
 
 ### Deployments
 
-<!--tu lam nha b-->
+#### Workers
 
-### bla bla b tu tao them neu co
+POST DE_URL/api/workers/bootstrap
+POST DE_URL/api/workers/register
+GET DE_URL/api/workers/:id (plan)
+GET DE_URL/api/workers/ (plan)
+
+#### Builders
+
+GET DE_URL/api/builders/poll
+POST DE_URL/api/builders/init
+POST DE_URL/api/builders/callback
+GET DE_URL/api/builders/jobs
+
+#### Deployers
+
+GET DE_URL/api/deployers/POLL
+POST DE_URL/api/deployers/callback

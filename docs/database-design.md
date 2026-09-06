@@ -28,7 +28,50 @@ Repo
 ├── branch_default
 └── language
 
+App
+├── repo_id
+├── owner
+├── appName
+├── branch
+├── containerId
+├── imageTag
+├── hostPort
+├── containerPort
+├── publicUrl
+├── workerId
+├── envVars
+├── status
+└── lastJobId
+
+Job
+├── jobId
+├── repo_id
+├── owner
+├── appName
+├── branch
+├── imageTag
+├── status
+├── assignedWorkerId
+├── assignedAt
+├── logs
+├── containerPort
+├── hostPort
+└── envVars
+
+Job
+├── workerId
+├── host
+├── cpuCores
+├── totalRamMb
+├── freeDiskGb
+├── role
+├── status
+├── activeJobsCount
+└── lastSeen
+
 ## Collections
+
+VITOMATE
 
 ## Relationships
 

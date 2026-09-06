@@ -51,7 +51,7 @@ The backend only accepts requests from trusted frontend origins.
 During local development:
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:3001 and <!--cua ban la gi-->
+- Backend: http://localhost:3001 and http://localhost:4000
 
 ## Environment Secrets
 
