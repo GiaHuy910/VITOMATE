@@ -45,7 +45,6 @@ class RepoController {
         branch_default: defaultBranch,
         language: language,
       });
-      console.log("Repository stored successfully:", repo);
       return res.status(201).json({
         message: "Account created successfully",
         repository: {
