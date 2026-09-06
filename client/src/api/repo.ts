@@ -1,3 +1,4 @@
+import { deploy } from "./deployment";
 const baseApi = "http://localhost:3001";
 
 export const checkGithubRepo = async (repoUrl: string) => {
@@ -16,7 +17,7 @@ export const checkGithubRepo = async (repoUrl: string) => {
   return data;
 };
 
-type deployForm = {
+export type deployForm = {
   repositoryId: Number;
   name: string;
   owner: string;
@@ -38,21 +39,13 @@ export const deployRepository = async (body: deployForm) => {
     throw new Error(data.message || "Invalid repository");
   }
 
-  //unknown purpose yet, temporarily set here
   const deployForm = {
     repo_id: data.repository.repo_id,
     owner: data.repository.owner,
     name: data.repository.name,
     branch: data.repository.branch,
   };
-  await fetch(`http://localhost:4000/api/builders/init`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify(deployForm),
-  });
+  deploy(deployForm);
 
   return data;
 };
