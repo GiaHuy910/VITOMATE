@@ -1,8 +1,9 @@
 import { deploy } from "./deployment";
-const baseApi = "http://localhost:3001";
+import { config } from "../config/url";
+const baseApi = `${config.server_1_url_dev}/repo`;
 
 export const checkGithubRepo = async (repoUrl: string) => {
-  const response = await fetch(`${baseApi}/repo/check`, {
+  const response = await fetch(`${baseApi}/check`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +27,7 @@ export type deployForm = {
 };
 
 export const deployRepository = async (body: deployForm) => {
-  const response = await fetch(`${baseApi}/repo/store`, {
+  const response = await fetch(`${baseApi}/store`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

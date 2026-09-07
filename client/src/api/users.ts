@@ -1,6 +1,6 @@
 import { type ThemeType } from "../contexts/theme/ThemeContext";
-
-const baseApi = "http://localhost:3001/users";
+import { config } from "../config/url";
+const baseApi = `${config.server_1_url_dev}/users`;
 
 export const getCurrentUser = async () => {
   const response = await fetch(`${baseApi}/me`, {

@@ -1,4 +1,5 @@
-const baseApi = "http://localhost:3001/auth";
+import { config } from "../config/url";
+const baseApi = `${config.server_1_url_dev}/auth`;
 
 export const getCurrentUser = async () => {
   const response = await fetch(`${baseApi}/me`, {

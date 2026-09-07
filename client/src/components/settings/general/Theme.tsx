@@ -52,8 +52,7 @@ const Theme = () => {
                 <div className="">{theme}</div>
                 <div className="ms-auto"></div>
               </button>
-
-              <ul className="dropdown-menu show rounded-0">
+              <ul className="dropdown-menu rounded-0">
                 {themes.map((themeItem) => (
                   <li key={themeItem.value}>
                     <button
