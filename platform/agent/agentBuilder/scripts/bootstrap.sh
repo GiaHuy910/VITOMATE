@@ -2,12 +2,11 @@
 set -e
 
 INSTALL_DIR="/opt/agent"
-MASTER_URL="${MASTER_URL:-http://192.168.1.8:4000}"
-WORKER_ID="${WORKER_ID:-worker-builder-01}"
-AGENT_ROLE="${AGENT_ROLE:-BUILDER}"
 
-MASTER_HOST=$(echo "$MASTER_URL" | sed -e 's|:[0-9]*$||' -e 's|^https*://||')
-REGISTRY_URL="${MASTER_HOST}:5001"
+MASTER_URL="${MASTER_URL:?MASTER_URL is required}"
+REGISTRY_URL="${REGISTRY_URL:?REGISTRY_URL is required}"
+WORKER_ID="${WORKER_ID:?WORKER_ID is required}"
+AGENT_ROLE="${AGENT_ROLE:?AGENT_ROLE is required}"
 
 echo "===> [0/5] Vô hiệu hóa và tiêu diệt tiến trình apt/dpkg ngầm..."
 export DEBIAN_FRONTEND=noninteractive
@@ -99,6 +98,7 @@ FREE_DISK_GB=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
 
 curl -X POST "${MASTER_URL}/api/workers/register" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${AGENT_TOKEN}" \
   -d '{
     "workerId": "'"${WORKER_ID}"'",
     "ip": "'"${WORKER_IP}"'",
