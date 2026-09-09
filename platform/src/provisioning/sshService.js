@@ -5,30 +5,6 @@ const os = require("os");
 
 class SSHService {
   /**
-   * Lấy IP LAN thực tế của máy Master (ví dụ: 192.168.1.8)
-   */
-  getPrimaryMasterIp() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      if (
-        name.includes("VirtualBox") ||
-        name.includes("vEthernet") ||
-        name.includes("VMware")
-      )
-        continue;
-
-      for (const iface of interfaces[name]) {
-        if (iface.family === "IPv4" && !iface.internal) {
-          if (iface.address.startsWith("192.168.1.")) {
-            return iface.address;
-          }
-        }
-      }
-    }
-    return "192.168.1.8";
-  }
-
-  /**
    * Tải đệ quy toàn bộ thư mục sang Remote máy ảo
    */
   async uploadDir(sftp, localDir, remoteDir) {
@@ -53,26 +29,25 @@ class SSHService {
     }
   }
 
-  /**
-   * Kết nối SSH tới Worker VM và thực hiện đẩy file/chạy script Bootstrap
-   */
+  /*
+  Bootstrap Worker VM
+  vmConfig cần có: host, port, username, password, workerId, role, masterUrl, registryUrl, files (agent, service, bootstrap)
+  */
   async bootstrapWorker(vmConfig) {
     return new Promise((resolve, reject) => {
-      // 1. Xử lý IP Master URL
-      let rawMasterUrl = vmConfig.masterUrl || "http://localhost:4000";
-      if (
-        rawMasterUrl.includes("localhost") ||
-        rawMasterUrl.includes("127.0.0.1")
-      ) {
-        const masterIp = this.getPrimaryMasterIp();
-        const port = rawMasterUrl.split(":")[2] || "4000";
-        rawMasterUrl = `http://${masterIp}:${port}`;
-      }
+      const masterUrl = vmConfig.masterUrl;
+      const registryUrl = vmConfig.registryUrl;
+
+      const workerId = vmConfig.workerId;
 
       // 2. Xác định thư mục Nguồn dựa trên Role (Default: BUILDER)
-      const role = (vmConfig.role || vmConfig.type || "BUILDER").toUpperCase();
-      const agentFolderName =
-        role === "DEPLOYER" ? "agentDeployer" : "agentBuilder";
+      const role = vmConfig.role.toUpperCase();
+      const agentFolderName_map = {
+        BUILDER: "agentBuilder",
+        DEPLOYER: "agentDeployer",
+      };
+
+      const agentFolderName = agentFolderName_map[role];
 
       // Trỏ thẳng tới agentBuilder hoặc agentDeployer (Cấu trúc thư mục phẳng mới)
       const sourceAgentDir = path.join(

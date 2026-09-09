@@ -19,13 +19,14 @@ const bootstrapWorker = async (workerData, generatedWorkerId) => {
   const resourcesDir = path.join(baseAgentDir, agentFolder);
 
   const targetworker = {
-    id: id || process.env.ID_WORKER || `worker-${host.replace(/\./g, "-")}`,
+    workerId: id,
     host,
     port: Number(port) || Number(process.env.PORT_WORKER) || 22,
     username,
     password,
     role: role,
     masterUrl,
+    registryUrl,
     files: {
       // Trỏ đúng vào các file nằm trong agentBuilder / agentDeploy
       agent: path.join(resourcesDir, "src", "index.js"),
