@@ -7,7 +7,7 @@ const UserSchema = new Schema(
   {
     userId: { type: Number, unique: true, required: true },
     displayname: { type: String, required: false },
-    username: { type: String, required: true },
+    username: { type: String, unique: false, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false },
     githubId: {
@@ -35,5 +35,4 @@ const UserSchema = new Schema(
   { timestamps: true },
 );
 
-// userSchema.index({ username: 1, email: 1 });
 module.exports = mongoose.model("User", UserSchema);

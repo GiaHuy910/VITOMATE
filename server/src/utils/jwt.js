@@ -1,11 +1,12 @@
 const jwt = require("jsonwebtoken");
-
+const config = require("../config/config");
+const jwtSecret = config.secrets.jwt;
 const createJwt = (userId) => {
   return jwt.sign(
     {
       sub: userId,
     },
-    process.env.JWT_SECRET,
+    jwtSecret,
     {
       algorithm: "HS256",
       expiresIn: "1h",
@@ -14,7 +15,7 @@ const createJwt = (userId) => {
 };
 
 const verifyJwt = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, jwtSecret);
 };
 
 module.exports = {

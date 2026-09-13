@@ -1,5 +1,10 @@
 import { Suspense } from "react";
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+} from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
@@ -19,6 +24,10 @@ const appRoutes: RouteObject[] = [
     path: "/",
     element: <MainLayout />,
     children: [
+      {
+        index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
       {
         path: "/dashboard",
         element: <DashBoard />,
@@ -74,7 +83,6 @@ const appRoutes: RouteObject[] = [
     ],
   },
 ];
-
 const router = createBrowserRouter([
   { element: <Outlet />, children: appRoutes },
 ]);
