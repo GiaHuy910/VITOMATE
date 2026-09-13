@@ -1,13 +1,13 @@
 const RepoCounter = require("../app/models/RepoCounter");
 
 const getNextRepoId = async () => {
-  const repocounter = await RepoCounter.findOneAndUpdate(
+  const repoCounter = await RepoCounter.findOneAndUpdate(
     { _id: "userId" },
     { $inc: { sequence: 1 } },
     { returnDocument: "after", upsert: true },
   );
 
-  return repocounter.sequence;
+  return repoCounter.sequence;
 };
 
 module.exports = { getNextRepoId };

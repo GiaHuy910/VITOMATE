@@ -1,13 +1,13 @@
-const Counter = require("../app/models/Counter");
+const UserCounter = require("../app/models/UserCounter");
 
 const getNextUserId = async () => {
-  const counter = await Counter.findOneAndUpdate(
+  const userCounter = await UserCounter.findOneAndUpdate(
     { _id: "userId" },
     { $inc: { sequence: 1 } },
     { returnDocument: "after", upsert: true },
   );
 
-  return counter.sequence;
+  return userCounter.sequence;
 };
 
 module.exports = { getNextUserId };
