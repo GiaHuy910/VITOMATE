@@ -1,7 +1,7 @@
 import { useAuth } from "../contexts/auth/useAuth";
 
 const WorkSpace = () => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="flex-basic-between">

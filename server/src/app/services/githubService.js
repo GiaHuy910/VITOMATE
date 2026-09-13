@@ -1,6 +1,10 @@
 const { parseGithubRepoUrl } = require("../../utils/github");
-
-const GITHUB_API = "https://api.github.com";
+const config = require("../../config/config");
+const apiUrl = config.github.apiUrl;
+const githubUrl = config.github.url;
+const githubCallbackUrl = config.github.callbackUrl;
+const githubClientId = config.github.clientId;
+const githubClientSecret = config.github.clientSecret;
 
 const githubHeaders = (accessToken) => ({
   Accept: "application/vnd.github+json",
@@ -8,22 +12,19 @@ const githubHeaders = (accessToken) => ({
 });
 
 const getGithubAccessToken = async (code) => {
-  const tokenResponse = await fetch(
-    "https://github.com/login/oauth/access_token",
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code,
-        redirect_uri: process.env.GITHUB_CALLBACK_URL,
-      }),
+  const tokenResponse = await fetch(`${githubUrl}/login/oauth/access_token`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      client_id: githubClientId,
+      client_secret: githubClientSecret,
+      code,
+      redirect_uri: githubCallbackUrl,
+    }),
+  });
 
   const tokenData = await tokenResponse.json();
   if (!tokenResponse.ok || tokenData.error) {
@@ -34,7 +35,7 @@ const getGithubAccessToken = async (code) => {
 };
 
 const getGithubUser = async (accessToken) => {
-  const githubUserResponse = await fetch(`${GITHUB_API}/user`, {
+  const githubUserResponse = await fetch(`${apiUrl}/user`, {
     headers: githubHeaders(accessToken),
   });
   if (!githubUserResponse.ok) {
@@ -45,7 +46,7 @@ const getGithubUser = async (accessToken) => {
 };
 
 const getGithubEmail = async (accessToken) => {
-  const githubEmailResponse = await fetch(`${GITHUB_API}/user/emails`, {
+  const githubEmailResponse = await fetch(`${apiUrl}/user/emails`, {
     headers: githubHeaders(accessToken),
   });
   if (!githubEmailResponse.ok) {
@@ -78,7 +79,7 @@ const getGithubUserInfo = async (code) => {
 
 const getGithubRepo = async (owner, repo) => {
   const response = await fetch(
-    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+    `${apiUrl}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
     {
       headers: {
         Accept: "application/vnd.github+json",

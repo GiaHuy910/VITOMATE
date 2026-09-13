@@ -1,4 +1,6 @@
-const baseApi = "http://localhost:3001";
+import { config } from "../config/config";
+
+const baseApi = `${config.api.server_api_dev}`;
 
 export const checkGithubRepo = async (repoUrl: string) => {
   const response = await fetch(`${baseApi}/repo/check`, {

@@ -5,6 +5,9 @@ const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
 const { createJwt, verifyJwt } = require("../../utils/jwt");
 const { createCbc } = require("../../utils/cbc");
+const config = require("../../config/config");
+const githubUrl = config.github.url;
+const clientUrlDev = config.app.clientUrlDev;
 
 class AuthController {
   //[POST] /auth/signup
@@ -25,7 +28,6 @@ class AuthController {
 
       // Hash password
       const passwordHash = await bcrypt.hash(password, 12);
-
       const userId = await getNextUserId();
 
       //tao user
@@ -138,9 +140,7 @@ class AuthController {
       redirect_uri: process.env.GITHUB_CALLBACK_URL,
       scope: "read:user user:email",
     });
-    res.redirect(
-      `https://github.com/login/oauth/authorize?${params.toString()}`,
-    );
+    res.redirect(`${githubUrl}/login/oauth/authorize?${params.toString()}`);
   }
   //[GET] /auth/github/callback
   async githubCallback(req, res) {
@@ -190,7 +190,7 @@ class AuthController {
         sameSite: "lax",
         maxAge: 60 * 60 * 1000, //1 gio
       });
-      return res.redirect(`http://localhost:5173/dashboard`);
+      return res.redirect(`${clientUrlDev}/dashboard`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
 

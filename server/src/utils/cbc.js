@@ -1,7 +1,10 @@
 const crypto = require("crypto");
 
+const config = require("../config/config");
+const cbcSecret = config.secrets.cbc;
+
 const ALGORITHM = "aes-256-cbc";
-const ENCRYPTION_KEY = Buffer.from(process.env.CBC_SECREt, "hex");
+const ENCRYPTION_KEY = Buffer.from(cbcSecret, "hex");
 const iv_length = 16;
 
 const createCbc = (AccessToken) => {
