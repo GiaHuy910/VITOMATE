@@ -1,4 +1,6 @@
 const Worker = require("../models/Workers");
+const PendingWorker = require("../models/PendingWorker");
+const tokenService = require("./tokenService");
 
 /**
  * Lấy tất cả Workers, sắp xếp mới nhất lên đầu
@@ -8,23 +10,31 @@ const getAllWorkers = async () => {
 };
 
 /**
- * Tìm Worker theo workerId hoặc _id
+ * Tìm Worker theo workerId
  */
 const getWorkerById = async (id) => {
-  return (
-    (await Worker.findOne({ workerId: id })) ||
-    (await Worker.findById(id).catch(() => null))
-  );
+  return await Worker.findOne({ workerId: id });
 };
 
-// 1. Đăng ký / Cập nhật Worker
+/**
+ * 2. Đăng ký / Cập nhật Worker
+ *
+ * Hàm này được gọi SAU KHI Worker đã xác thực
+ * bằng Agent Token.
+ *
+ * workerId và role không nên lấy từ request body.
+ * Chúng sẽ được lấy từ req.workerIdentity.
+ */
 const upsertWorker = async (workerData) => {
-  const { workerId, ip, cpuCores, totalRamMb, freeDiskGb, role, status } =
+  const { workerId, host, cpuCores, totalRamMb, freeDiskGb, role, status } =
     workerData;
 
-  // 1. Chỉ đưa status vào $set nếu thực sự có truyền status
+  if (!workerId) {
+    throw new Error("workerId là bắt buộc");
+  }
+
   const setPayload = {
-    ip,
+    host,
     cpuCores,
     totalRamMb,
     freeDiskGb,
@@ -32,18 +42,21 @@ const upsertWorker = async (workerData) => {
     lastSeen: new Date(),
   };
 
+  // Chỉ đưa status vào $set nếu thực sự có truyền status
   if (status) {
     setPayload.status = status;
   }
 
-  // 2. Xóa trường 'status' ra khỏi $setOnInsert để tránh trùng lặp
   return await Worker.findOneAndUpdate(
     { workerId },
     {
       $set: setPayload,
+
       $setOnInsert: {
         activeJobsCount: 0,
-        // Nếu không có status truyền lên thì mặc định mới đặt là READY
+
+        // Nếu không có status truyền lên
+        // thì Worker mới mặc định là READY
         ...(status ? {} : { status: "READY" }),
       },
     },
@@ -55,7 +68,18 @@ const upsertWorker = async (workerData) => {
   );
 };
 
-// 2. Tìm Worker phù hợp nhất để giao Job
+/**
+ * 3. Xóa PendingWorker sau khi Worker đăng ký thành công
+ */
+const deletePendingWorker = async (workerId) => {
+  return await PendingWorker.deleteOne({
+    workerId,
+  });
+};
+
+/**
+ * 4. Tìm Worker phù hợp nhất để giao Job
+ */
 const findAvailableWorker = async (role) => {
   return await Worker.findOne({
     role,
@@ -66,26 +90,44 @@ const findAvailableWorker = async (role) => {
   });
 };
 
-// 3. Cập nhật số lượng Job đang chạy của Worker
+/**
+ * 5. Cập nhật số lượng Job đang chạy của Worker
+ */
 const updateActiveJobs = async (workerId, increment = 1) => {
   return await Worker.findOneAndUpdate(
     { workerId },
-    { $inc: { activeJobsCount: increment } },
-    { returnDocument: "after" }, // Sửa từ new: true
+    {
+      $inc: {
+        activeJobsCount: increment,
+      },
+    },
+    {
+      returnDocument: "after",
+    },
   );
 };
 
-// 4. Cập nhật Heartbeat khi Worker gửi ping định kỳ
+/**
+ * 6. Cập nhật Heartbeat khi Worker gửi ping định kỳ
+ */
 const updateHeartbeat = async (workerId) => {
   return await Worker.findOneAndUpdate(
     { workerId },
-    { $set: { lastSeen: new Date() } },
-    { returnDocument: "after" }, // Sửa từ new: true
+    {
+      $set: {
+        lastSeen: new Date(),
+      },
+    },
+    {
+      returnDocument: "after",
+    },
   );
 };
 
 module.exports = {
+  createPendingWorker,
   upsertWorker,
+  deletePendingWorker,
   findAvailableWorker,
   updateActiveJobs,
   updateHeartbeat,

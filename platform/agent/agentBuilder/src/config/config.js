@@ -1,6 +1,7 @@
 module.exports = {
-  MASTER_URL: process.env.MASTER_URL || "http://192.168.1.8:4000",
-  WORKER_ID: process.env.WORKER_ID || "builder-worker-01",
-  ROLE: "BUILDER", // Định danh loại Worker cho Master
+  MASTER_URL: process.env.MASTER_URL,
+  WORKER_ID: process.env.WORKER_ID,
+  AGENT_ROLE: process.env.AGENT_ROLE,
+  AGENT_TOKEN: process.env.AGENT_TOKEN,
   POLL_INTERVAL: parseInt(process.env.POLL_INTERVAL, 10) || 5000,
 };

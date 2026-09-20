@@ -1,46 +1,24 @@
 const { Client } = require("ssh2");
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
+const config = require("../config");
 
 class SSHService {
-  /**
-   * Lấy IP LAN thực tế của máy Master (ví dụ: 192.168.1.8)
-   */
-  getPrimaryMasterIp() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      if (
-        name.includes("VirtualBox") ||
-        name.includes("vEthernet") ||
-        name.includes("VMware")
-      )
-        continue;
-
-      for (const iface of interfaces[name]) {
-        if (iface.family === "IPv4" && !iface.internal) {
-          if (iface.address.startsWith("192.168.1.")) {
-            return iface.address;
-          }
-        }
-      }
-    }
-    return "192.168.1.8";
-  }
-
-  /**
-   * Tải đệ quy toàn bộ thư mục sang Remote máy ảo
-   */
   async uploadDir(sftp, localDir, remoteDir) {
-    await new Promise((resolve) => sftp.mkdir(remoteDir, () => resolve()));
+    await new Promise((resolve, reject) => {
+      sftp.mkdir(remoteDir, (err) => {
+        if (err && err.code !== 4) return reject(err);
+        resolve();
+      });
+    });
 
     const files = fs.readdirSync(localDir);
-
     for (const file of files) {
       const localPath = path.join(localDir, file);
       const remotePath = path.posix.join(remoteDir, file);
+      const stat = fs.statSync(localPath);
 
-      if (fs.statSync(localPath).isDirectory()) {
+      if (stat.isDirectory()) {
         await this.uploadDir(sftp, localPath, remotePath);
       } else {
         await new Promise((resolve, reject) => {
@@ -53,119 +31,203 @@ class SSHService {
     }
   }
 
-  /**
-   * Kết nối SSH tới Worker VM và thực hiện đẩy file/chạy script Bootstrap
-   */
-  async bootstrapWorker(vmConfig) {
+  async installPublicKey(conn) {
+    const privateKeyPath = config.worker.primaryKeyPath;
+    if (!privateKeyPath) throw new Error("primaryKeyPath chưa được cấu hình");
+
+    const publicKeyPath = `${privateKeyPath}.pub`;
+    if (!fs.existsSync(publicKeyPath)) {
+      throw new Error(`Không tìm thấy SSH public key: ${publicKeyPath}`);
+    }
+
+    const publicKey = fs.readFileSync(publicKeyPath, "utf8").trim();
+
+    const addKeyCommand = `
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh &&
+      touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys &&
+      grep -qxF '${publicKey}' ~/.ssh/authorized_keys || echo '${publicKey}' >> ~/.ssh/authorized_keys
+    `;
+
     return new Promise((resolve, reject) => {
-      // 1. Xử lý IP Master URL
-      let rawMasterUrl = vmConfig.masterUrl || "http://localhost:4000";
-      if (
-        rawMasterUrl.includes("localhost") ||
-        rawMasterUrl.includes("127.0.0.1")
-      ) {
-        const masterIp = this.getPrimaryMasterIp();
-        const port = rawMasterUrl.split(":")[2] || "4000";
-        rawMasterUrl = `http://${masterIp}:${port}`;
-      }
-
-      // 2. Xác định thư mục Nguồn dựa trên Role (Default: BUILDER)
-      const role = (vmConfig.role || vmConfig.type || "BUILDER").toUpperCase();
-      const agentFolderName =
-        role === "DEPLOYER" ? "agentDeployer" : "agentBuilder";
-
-      // Trỏ thẳng tới agentBuilder hoặc agentDeployer (Cấu trúc thư mục phẳng mới)
-      const sourceAgentDir = path.join(
-        __dirname,
-        `../../agent/${agentFolderName}`,
-      );
-
-      console.log(
-        `[SSH] Chuẩn bị Setup cho Role: ${role} | Nguồn: ${sourceAgentDir}`,
-      );
-
-      if (!fs.existsSync(sourceAgentDir)) {
-        return reject(
-          new Error(`Thư mục nguồn không tồn tại: ${sourceAgentDir}`),
-        );
-      }
-
-      const conn = new Client();
-
-      conn.on("ready", () => {
-        console.log(`[SSH] Kết nối thành công tới VM: ${vmConfig.host}`);
-
-        // 3. Dọn dẹp /tmp/agent cũ trên máy ảo trước khi mở SFTP upload
-        conn.exec("rm -rf /tmp/agent", (cleanErr) => {
-          if (cleanErr) {
-            console.warn("[SSH] Không thể xóa /tmp/agent cũ, bỏ qua...");
+      conn.exec(addKeyCommand, (err, stream) => {
+        if (err) return reject(err);
+        stream.on("close", (code) => {
+          if (code === 0) {
+            console.log("[SSH] Đã cài SSH public key vào Worker thành công");
+            resolve();
+          } else {
+            reject(new Error("Lỗi khi ghi authorized_keys"));
           }
-
-          conn.sftp(async (err, sftp) => {
-            if (err) {
-              conn.end();
-              return reject(err);
-            }
-
-            try {
-              console.log(
-                `[SFTP] Đang tải toàn bộ thư mục [${agentFolderName}] sang /tmp/agent...`,
-              );
-
-              // Upload toàn bộ mã nguồn vào thẳng /tmp/agent
-              await this.uploadDir(sftp, sourceAgentDir, "/tmp/agent");
-
-              console.log(
-                "[SFTP] Upload thành công! Bắt đầu chạy Script Bootstrap...",
-              );
-
-              // Exec cấp quyền và chạy trực tiếp /tmp/agent/scripts/bootstrap.sh
-              const command = `echo '${vmConfig.password}' | sudo -S env MASTER_URL="${rawMasterUrl}" WORKER_ID="${vmConfig.id || "worker-01"}" AGENT_ROLE="${role}" bash -c "chmod +x /tmp/agent/scripts/bootstrap.sh && /tmp/agent/scripts/bootstrap.sh"`;
-
-              conn.exec(command, (execErr, stream) => {
-                if (execErr) {
-                  conn.end();
-                  return reject(execErr);
-                }
-
-                stream
-                  .on("close", (code) => {
-                    console.log(
-                      `[SSH] Bootstrap hoàn tất với mã thoát: ${code}`,
-                    );
-                    conn.end();
-                    if (code === 0) resolve(true);
-                    else
-                      reject(
-                        new Error(`Bootstrap thất bại với exit code ${code}`),
-                      );
-                  })
-                  .on("data", (data) => console.log(`[Worker STDOUT]: ${data}`))
-                  .stderr.on("data", (data) =>
-                    console.error(`[Worker STDERR]: ${data}`),
-                  );
-              });
-            } catch (uploadErr) {
-              conn.end();
-              reject(new Error(`[SFTP Error]: ${uploadErr.message}`));
-            }
-          });
         });
       });
+    });
+  }
 
-      conn.on("error", (err) => {
-        conn.end();
-        reject(err);
-      });
+  /**
+   * Helper: Tự động phân luồng kết nối (Key -> Password Fallback)
+   */
+  async getSSHClient(vmConfig) {
+    const privateKeyPath = path.resolve(
+      process.cwd(),
+      config.worker.primaryKeyPath,
+    );
 
-      conn.connect({
+    // 1. Thử kết nối bằng Private Key (Truy cập dạng Update)
+    if (fs.existsSync(privateKeyPath)) {
+      try {
+        const privateKey = fs.readFileSync(privateKeyPath, "utf8");
+        const conn = await new Promise((resolve, reject) => {
+          const client = new Client();
+          client.on("ready", () => resolve(client));
+          client.on("error", reject);
+          client.connect({
+            host: vmConfig.host,
+            port: vmConfig.port || 22,
+            username: vmConfig.username,
+            privateKey,
+            readyTimeout: 5000,
+          });
+        });
+
+        console.log(
+          "[SSH] Kết nối thành công bằng Private Key (Chế độ: UPDATE)",
+        );
+        return { conn, isFirstTime: false };
+      } catch (err) {
+        console.log(
+          "[SSH] Không thể dùng Key, chuyển sang Password (Chế độ: FIRST BOOTSTRAP)",
+        );
+      }
+    }
+
+    // 2. Nếu không có Key hoặc Key lỗi -> Kết nối bằng Password (Bootstrap lần đầu)
+    const conn = await new Promise((resolve, reject) => {
+      const client = new Client();
+      client.on("ready", () => resolve(client));
+      client.on("error", reject);
+      client.connect({
         host: vmConfig.host,
         port: vmConfig.port || 22,
         username: vmConfig.username,
         password: vmConfig.password,
-        readyTimeout: 20000,
+        readyTimeout: 10000,
       });
     });
+
+    console.log(
+      "[SSH] Kết nối thành công bằng Password (Chế độ: FIRST BOOTSTRAP)",
+    );
+    return { conn, isFirstTime: true };
+  }
+
+  async bootstrapWorker(vmConfig) {
+    const {
+      masterUrl,
+      registryUrl,
+      workerId,
+      agentToken,
+      host,
+      username,
+      password,
+    } = vmConfig;
+
+    if (
+      !masterUrl ||
+      !registryUrl ||
+      !workerId ||
+      !host ||
+      !username ||
+      !agentToken
+    ) {
+      throw new Error("Thiếu cấu hình tham số bắt buộc để Bootstrap");
+    }
+
+    const role = (vmConfig.role || "BUILDER").toUpperCase();
+    const agentFolderNameMap = {
+      BUILDER: "agentBuilder",
+      DEPLOYER: "agentDeployer",
+    };
+    const agentFolderName = agentFolderNameMap[role];
+
+    const sourceAgentDir = path.join(
+      __dirname,
+      `../../agent/${agentFolderName}`,
+    );
+    if (!fs.existsSync(sourceAgentDir)) {
+      throw new Error(`Thư mục nguồn Agent không tồn tại: ${sourceAgentDir}`);
+    }
+
+    // Tự nhận diện lần đầu hay lần sau
+    const { conn, isFirstTime } = await this.getSSHClient(vmConfig);
+
+    try {
+      // Nếu là lần đầu -> Cài Public Key để phục vụ các lần sau
+      if (isFirstTime) {
+        console.log(
+          "[SSH] Lần đầu Bootstrap: Đang tiến hành cài SSH Public Key...",
+        );
+        await this.installPublicKey(conn);
+      }
+
+      // Xóa agent tạm cũ
+      await new Promise((resolve) => {
+        conn.exec("rm -rf /tmp/agent", () => resolve());
+      });
+
+      // Mở SFTP để upload source Agent
+      const sftp = await new Promise((resolve, reject) => {
+        conn.sftp((err, sftp) => (err ? reject(err) : resolve(sftp)));
+      });
+
+      console.log(
+        `[SFTP] Đang Sync source code [${agentFolderName}] sang Worker...`,
+      );
+      await this.uploadDir(sftp, sourceAgentDir, "/tmp/agent");
+
+      // Truyền biến IS_UPDATE để bootstrap.sh biết đường xử lý
+      const command = `
+        sudo -S env \
+        MASTER_URL="${masterUrl}" \
+        REGISTRY_URL="${registryUrl}" \
+        WORKER_ID="${workerId}" \
+        AGENT_ROLE="${role}" \
+        AGENT_TOKEN="${agentToken}" \
+        IS_UPDATE="${!isFirstTime}" \
+        bash -c '
+          chmod +x /tmp/agent/scripts/bootstrap.sh &&
+          /tmp/agent/scripts/bootstrap.sh
+        '
+      `;
+
+      await new Promise((resolve, reject) => {
+        conn.exec(command, (err, stream) => {
+          if (err) return reject(err);
+
+          // Nhập password cho sudo nếu chạy lần đầu bằng password
+          if (isFirstTime && password) {
+            stream.write(`${password}\n`);
+          }
+
+          stream.stderr.on("data", (data) =>
+            console.error(`[STDERR]: ${data}`),
+          );
+          stream.on("data", (data) => console.log(`[STDOUT]: ${data}`));
+          stream.on("close", (code) => {
+            if (code === 0) resolve();
+            else reject(new Error(`Bootstrap thất bại với exit code: ${code}`));
+          });
+        });
+      });
+
+      console.log(
+        `[SSH] Worker [${workerId}] ${isFirstTime ? "Bootstrap" : "Update"} thành công!`,
+      );
+      conn.end();
+      return true;
+    } catch (error) {
+      conn.end();
+      throw error;
+    }
   }
 }
 

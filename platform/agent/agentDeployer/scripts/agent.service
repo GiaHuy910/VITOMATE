@@ -5,12 +5,16 @@ Requires=docker.service
 
 [Service]
 Type=simple
-User=hoang
+User=root
 WorkingDirectory=/opt/agent
+
+# Nạp toàn bộ biến môi trường từ file do bootstrap.sh sinh ra
+EnvironmentFile=/etc/paas-agent/agent.env
+Environment=NODE_ENV=production
+
 ExecStart=/usr/bin/node /opt/agent/src/index.js
 Restart=always
 RestartSec=5
-Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target

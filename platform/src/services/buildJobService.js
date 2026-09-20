@@ -1,19 +1,26 @@
 const Job = require("../models/job");
 const Worker = require("../models/Workers");
 const App = require("../models/app");
+const config = require("../config/config");
+const JobCounter = require("../models/JobCounter");
 
 /**
  * Tạo Build Job mới và lưu vào MongoDB
  */
 async function createBuildJob({ repo_id, owner, name, branch }) {
-  const jobId = `job-build-${Date.now()}`;
-  const imageTag = `192.168.1.8:5001/apps/${repo_id}:${branch || "latest"}`;
+  const jobId = await JobCounter.findByIdAndUpdate(
+    "job",
+    { $inc: { sequence: 1 } },
+    { new: true, upsert: true },
+  );
+
+  const imageTag = `${config.registry.url}/apps/${repo_id}:${branch || "latest"}`;
 
   const newJob = await Job.create({
     jobId,
     repo_id,
     owner,
-    appName: name || repo_id,
+    appName: name,
     branch: branch || "main",
     imageTag,
     status: "PENDING",
@@ -22,7 +29,7 @@ async function createBuildJob({ repo_id, owner, name, branch }) {
   console.log(`[Platform Queue] Đã thêm Job mới vào DB: ${newJob.jobId}`);
 
   return {
-    id: newJob.jobId,
+    jobId: newJob.jobId,
     type: "BUILD_AND_PACK",
     payload: {
       repo_id: newJob.repo_id,
@@ -43,14 +50,14 @@ async function getNextJob() {
     { $set: { status: "BUILDING" } },
     {
       sort: { createdAt: 1 },
-      returnDocument: "after", // 🟢 Đã chuẩn hóa
+      returnDocument: "after",
     },
   );
 
   if (!job) return null;
 
   return {
-    id: job.jobId,
+    jobId: job.jobId,
     type: "BUILD_AND_PACK",
     payload: {
       repo_id: job.repo_id,
@@ -144,7 +151,7 @@ const getDeployJobForWorker = async (workerId) => {
   const job = await Job.findOneAndUpdate(
     { assignedWorkerId: workerId, status: "DEPLOY_PENDING" },
     { $set: { status: "DEPLOYING" } },
-    { sort: { assignedAt: 1 }, returnDocument: "after" }, // 🟢 Đã chuẩn hóa
+    { sort: { assignedAt: 1 }, returnDocument: "after" },
   );
 
   return job;

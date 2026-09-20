@@ -17,13 +17,7 @@ function runCommand(command, cwd) {
   });
 }
 
-/**
- * Build Docker Image và Push lên Registry
- * @param {Object} params
- * @param {string} params.buildDir - Thư mục chứa source code (nơi có Dockerfile)
- * @param {string} params.imageTag - Tag cho Image (Ví dụ: "192.168.1.18:5000/apps/my-app:main")
- * @param {Object} [params.registryAuth] - Cấu hình đăng nhập Registry (nếu là Private Registry)
- */
+// Build Docker Image và Push lên Registry
 
 // Hàm phụ trợ tự động sinh Dockerfile mặc định nếu repo người dùng chưa có
 function generateDefaultDockerfile(buildDir) {

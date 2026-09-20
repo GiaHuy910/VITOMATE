@@ -2,14 +2,14 @@ const mongoose = require("mongoose");
 
 const jobSchema = new mongoose.Schema(
   {
-    jobId: { type: String, required: true, unique: true, index: true },
+    job_id: { type: String, required: true, unique: true, index: true },
     repo_id: { type: String, required: true },
     owner: { type: String, required: true },
-    appName: { type: String, required: true }, // Bỏ unique: true ở đây
+    app_name: { type: String, required: true },
     branch: { type: String, default: "main" },
 
     // Thông tin Image khi Build thành công
-    imageTag: { type: String, default: "" },
+    image_tag: { type: String, default: "" },
 
     // Trạng thái vòng đời của Job
     status: {
@@ -28,16 +28,16 @@ const jobSchema = new mongoose.Schema(
     },
 
     // Phân công Deploy Worker (Phục vụ luồng Pulling/Polling)
-    assignedWorkerId: { type: String, default: null, index: true },
-    assignedAt: { type: Date, default: null },
+    assigned_worker_id: { type: String, default: null, index: true },
+    assigned_at: { type: Date, default: null },
 
     // Log hệ thống
     logs: { type: String, default: "" },
 
     // Thông tin Cấu hình Container khi Deploy
-    containerPort: { type: Number, default: 3000 },
-    hostPort: { type: Number, default: 8080 },
-    envVars: { type: Map, of: String, default: {} },
+    container_port: { type: Number, default: 3000 },
+    host_port: { type: Number, default: 8080 },
+    env_vars: { type: Map, of: String, default: {} },
   },
   { timestamps: true },
 );
