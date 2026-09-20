@@ -9,14 +9,14 @@ MongoDB
 <!--ban biet phai lam gi r do-->
 
 User
-├── userId
-├── displayname
-├── username
+├── user_id
+├── display_name
+├── user_name
 ├── email
 ├── password
-├── githubId
-├── avatar├── url,publicId
-├── encryptedToken
+├── github_id
+├── avatar├── url,public_id
+├── encrypted_token
 └── theme
 
 Repo

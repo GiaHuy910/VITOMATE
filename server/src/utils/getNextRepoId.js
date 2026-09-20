@@ -2,7 +2,7 @@ const RepoCounter = require("../app/models/RepoCounter");
 
 const getNextRepoId = async () => {
   const repoCounter = await RepoCounter.findOneAndUpdate(
-    { _id: "userId" },
+    { _id: "user_id" },
     { $inc: { sequence: 1 } },
     { returnDocument: "after", upsert: true },
   );

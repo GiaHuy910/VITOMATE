@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 type RepositoryForm = {
   name: string;
   defaultBranch: string;
-  language: string;
 };
 const CreateStatic = () => {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const CreateStatic = () => {
   const [form, setForm] = useState<RepositoryForm>({
     name: "",
     defaultBranch: "",
-    language: "",
   });
 
   const handleSetRepository = (repository: GithubRepository) => {
@@ -28,7 +26,6 @@ const CreateStatic = () => {
     setForm({
       name: repository.name,
       defaultBranch: repository.defaultBranch,
-      language: repository.language ?? "",
     });
   };
   const components = {
@@ -54,7 +51,6 @@ const CreateStatic = () => {
       name: form.name,
       owner: repository.owner,
       defaultBranch: form.defaultBranch,
-      language: form.language,
     };
     await deployRepository(body);
     navigate("/dashboard");
@@ -133,24 +129,7 @@ const CreateStatic = () => {
               />
             </div>
           </div>
-          <div className="row my-4 ">
-            <div className="col-12 col-md-4 ">
-              <h5>Language</h5>
-              <div className="d-grid gap-2 ">
-                Detected programming language of the repository.
-              </div>
-            </div>
-            <div className="col-12 col-md-8 ">
-              <input
-                value={form.language}
-                placeholder="example-language"
-                className="form-control rounded-0 border"
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, language: e.target.value }))
-                }
-              />
-            </div>
-          </div>
+          <div className="row my-4 "></div>
           <div className=" my-5 ">
             <button
               className="btn btn-secondary btn-lg rounded-0"

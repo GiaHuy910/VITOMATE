@@ -1,5 +1,4 @@
 import { config } from "../config/config";
-
 const baseApi = `${config.api.server_api_dev}/auth`;
 
 export const getCurrentUser = async () => {

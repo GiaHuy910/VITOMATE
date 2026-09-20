@@ -70,7 +70,7 @@ const getGithubUserInfo = async (code) => {
   ]);
 
   return {
-    githubId: String(githubUser.id),
+    github_id: String(githubUser.id),
     username: githubUser.login,
     email,
     accessToken,

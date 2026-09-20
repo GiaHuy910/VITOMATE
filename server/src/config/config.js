@@ -1,6 +1,6 @@
 const config = {
   app: {
-    port: parseInt(process.env.PORT, 10),
+    port: Number(process.env.PORT),
     clientUrlDev: process.env.CLIENT_URL_DEV || "http://localhost:3000",
     clientUrlProd: process.env.CLIENT_URL_PROD,
   },
@@ -10,7 +10,6 @@ const config = {
   },
   database: {
     serverUri: process.env.DB_URI_SERVER,
-    platformUri: process.env.DB_URI_PLATFORM,
   },
   github: {
     clientId: process.env.GITHUB_CLIENT_ID,
@@ -26,7 +25,7 @@ const config = {
   },
 };
 
-const requiredEnv = ["JWT_SECRET", "DB_URI_SERVER", "DB_URI_PLATFORM"];
+const requiredEnv = ["JWT_SECRET", "DB_URI_SERVER"];
 requiredEnv.forEach((envName) => {
   if (!process.env[envName]) {
     console.warn(`Cảnh báo: Thiếu biến môi trường quan trọng: ${envName}`);

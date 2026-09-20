@@ -5,12 +5,12 @@ const Schema = mongoose.Schema;
 
 const UserSchema = new Schema(
   {
-    userId: { type: Number, unique: true, required: true },
-    displayname: { type: String, required: false },
+    user_id: { type: Number, unique: true, required: true },
+    display_name: { type: String, required: false },
     username: { type: String, unique: false, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false },
-    githubId: {
+    github_id: {
       type: String,
       unique: true,
       sparse: true,
@@ -20,12 +20,12 @@ const UserSchema = new Schema(
         type: String,
         default: null,
       },
-      publicId: {
+      public_id: {
         type: String,
         default: null,
       },
     },
-    encryptedToken: { type: String, required: false },
+    encrypted_token: { type: String, required: false },
     theme: {
       type: String,
       enum: ["Light", "Dark", "System"],

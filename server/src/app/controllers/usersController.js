@@ -11,10 +11,17 @@ class UsersController {
   //[GET] /users/me
   async me(req, res) {
     try {
-      const userId = req.user.userId;
+      const user_id = req.user.user_id;
       const user = await User.findOne(
-        { userId },
-        { _id: 0, userId: 1, displayname: 1, username: 1, email: 1, avatar: 1 },
+        { user_id },
+        {
+          _id: 0,
+          user_id: 1,
+          display_name: 1,
+          username: 1,
+          email: 1,
+          avatar: 1,
+        },
       );
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -30,17 +37,17 @@ class UsersController {
   //[PATCH] /users/me
   async updateUser(req, res) {
     try {
-      const userId = req.user.userId;
-      const { displayname, username, email } = req.body;
+      const user_id = req.user.user_id;
+      const { display_name, username, email } = req.body;
 
-      const user = await User.findOne({ userId });
+      const user = await User.findOne({ user_id });
       if (!user) {
         return res.status(404).json({
           message: "User not found",
         });
       }
-      if (displayname !== undefined) {
-        user.displayname = displayname;
+      if (display_name !== undefined) {
+        user.display_name = display_name;
       }
       if (username !== undefined) {
         user.username = username;
@@ -53,8 +60,8 @@ class UsersController {
       return res.status(200).json({
         message: "Profile updated successfully",
         user: {
-          userId: user.userId,
-          displayname: user.displayname,
+          user_id: user.user_id,
+          display_name: user.display_name,
           username: user.username,
           email: user.email,
           avatar: user.avatar,
@@ -68,7 +75,7 @@ class UsersController {
   async updateUserTheme(req, res) {
     try {
       const { theme } = req.body;
-      const userId = req.user.userId;
+      const user_id = req.user.user_id;
       if (!["Light", "Dark", "System"].includes(theme)) {
         return res.status(400).json({
           message: "Invalid theme",
@@ -76,7 +83,7 @@ class UsersController {
       }
 
       const user = await User.findOneAndUpdate(
-        { userId },
+        { user_id },
         { theme },
         { returnDocument: "after" },
       );
@@ -99,8 +106,8 @@ class UsersController {
   //[PATCH] /users/me/avatar
   async updateUserAvatar(req, res) {
     try {
-      const userId = req.user.userId;
-      const user = await User.findOne({ userId });
+      const user_id = req.user.user_id;
+      const user = await User.findOne({ user_id });
       if (!user) {
         return res.status(404).json({
           message: "User not found",
@@ -115,7 +122,7 @@ class UsersController {
 
       const result = await uploadToCloudinary(req.file.buffer, {
         folder: "vitomate/avatars",
-        public_id: `user_${userId}`,
+        public_id: `user_${user_id}`,
         overwrite: true,
         resource_type: "image",
       });
@@ -123,15 +130,15 @@ class UsersController {
       //Lưu thông tin ảnh vào mongodb
       user.avatar = {
         url: result.secure_url,
-        publicId: result.public_id,
+        user_id: result.public_id,
       };
       await user.save();
 
       return res.status(200).json({
         message: "Avatar updated successfully",
         user: {
-          userId: user.userId,
-          displayname: user.displayname,
+          user_id: user.user_id,
+          display_name: user.display_name,
           username: user.username,
           email: user.email,
           avatar: user.avatar,
@@ -147,34 +154,34 @@ class UsersController {
   //[DELETE] /users/me/avatar
   async deleteUserAvatar(req, res) {
     try {
-      const userId = req.user.userId;
-      const user = await User.findOne({ userId });
+      const user_id = req.user.user_id;
+      const user = await User.findOne({ user_id });
       if (!user) {
         return res.status(404).json({
           message: "User not found",
         });
       }
-      if (!user.avatar?.publicId) {
+      if (!user.avatar?.public_id) {
         return res.status(404).json({
           message: "Avatar not found",
         });
       }
 
-      await cloudinary.uploader.destroy(user.avatar.publicId);
+      await cloudinary.uploader.destroy(user.avatar.public_id);
       user.avatar.url = null;
-      user.avatar.publicId = null;
+      user.avatar.public_id = null;
       await user.save();
 
       return res.status(200).json({
         message: "Avatar deleted successfully",
         user: {
-          userId: user.userId,
-          displayname: user.displayname,
+          user_id: user.user_id,
+          display_name: user.display_name,
           username: user.username,
           email: user.email,
           avatar: {
             url: user.avatar.url,
-            publicId: user.avatar.publicId,
+            public_id: user.avatar.public_id,
           },
         },
       });

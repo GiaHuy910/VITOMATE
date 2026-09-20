@@ -1,7 +1,7 @@
 import { useState } from "react";
 import placeholderImage from "../assets/placeholder.jpg";
-
-type Avatar = { url: string | null; publicId: string | null };
+//nhớ sửa lại sau này
+type Avatar = { url: string | null; public_id: string | null };
 type AvatarFieldProps = {
   avatar: Avatar | null | undefined;
   onUpLoad: (e: React.ChangeEvent<HTMLInputElement>) => void;
