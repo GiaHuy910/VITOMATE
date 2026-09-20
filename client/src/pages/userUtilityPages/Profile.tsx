@@ -12,19 +12,20 @@ import {
   updateUser,
 } from "../../api/users";
 
+//nhớ sửa lại sau này
 type ProfileUser = {
-  userId: number;
-  displayname: string;
+  user_id: number;
+  display_name: string;
   username: string;
   email: string;
   avatar: {
     url: string | null;
-    publicId: string | null;
+    public_id: string | null;
   };
 };
 
 type ProfileFormData = {
-  displayname: string;
+  display_name: string;
   username: string;
   email: string;
 };
@@ -33,19 +34,19 @@ const Profile = () => {
   const { setUser: setAuthUser } = useAuth();
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [editing, setEditing] = useState({
-    displayname: false,
+    display_name: false,
     username: false,
     email: false,
   });
 
   const [formData, setFormData] = useState<ProfileFormData>({
-    displayname: "",
+    display_name: "",
     username: "",
     email: "",
   });
   const profileFields = [
     {
-      key: "displayname",
+      key: "display_name",
       label: "Display Name",
     },
     {
@@ -69,7 +70,7 @@ const Profile = () => {
       prev
         ? {
             ...prev,
-            displayname: updatedUser.displayname,
+            displayname: updatedUser.display_name,
             username: updatedUser.username,
             email: updatedUser.email,
             avatar: {
@@ -126,7 +127,7 @@ const Profile = () => {
       .then((data) => {
         setUser(data.user);
         setFormData({
-          displayname: data.user.displayname,
+          display_name: data.user.display_name,
           username: data.user.username,
           email: data.user.email,
         });

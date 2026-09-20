@@ -29,7 +29,7 @@ const Header = () => {
   const handleWorkSpace = () => {
     navigate("/workspace");
   };
-
+  //ghi là display_name nhưng thực chất là display_name sau này nhớ
   return (
     <nav className="navbar navbar-expand-lg bg-body fixed-top border">
       <div className="container-fluid">
@@ -107,7 +107,7 @@ const Header = () => {
                 alt=""
                 className="user-avatar-small"
               />
-              {user.displayname}
+              {user.display_name}
               <div
                 className="ps-1 dropdown-toggle"
                 style={{ color: "white" }}

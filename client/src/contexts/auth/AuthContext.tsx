@@ -3,7 +3,8 @@ import { createContext } from "react";
 type ThemeType = "Light" | "Dark" | "System";
 
 export type User = {
-  displayname: string;
+  //nhớ sửa và đổi lại displayName
+  display_name: string;
   userId: number;
   username: string;
   email: string;

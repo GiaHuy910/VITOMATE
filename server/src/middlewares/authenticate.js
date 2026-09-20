@@ -8,7 +8,7 @@ const authenticate = (req, res, next) => {
     }
     const decodedPayload = jwt.verifyJwt(token);
     req.user = {
-      userId: decodedPayload.sub,
+      user_id: decodedPayload.sub,
     };
     next();
   } catch (error) {

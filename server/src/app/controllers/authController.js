@@ -14,7 +14,7 @@ class AuthController {
   async signup(req, res, next) {
     try {
       const { username, email, password } = req.body;
-      const displayname = username;
+      const display_name = username;
 
       //business validation
       const existingUser = await User.findOne({
@@ -28,12 +28,12 @@ class AuthController {
 
       // Hash password
       const passwordHash = await bcrypt.hash(password, 12);
-      const userId = await getNextUserId();
+      const user_id = await getNextUserId();
 
       //tao user
       const user = await User.create({
         displayname,
-        userId,
+        user_id,
         username,
         email,
         password: passwordHash,
@@ -42,7 +42,7 @@ class AuthController {
       return res.status(201).json({
         message: "Account created successfully",
         user: {
-          userId: user.userId,
+          user_id: user.user_id,
           username: user.username,
           email: user.email,
         },
@@ -73,8 +73,7 @@ class AuthController {
       }
 
       //Jwt,session o day
-      const token = createJwt(user.userId);
-
+      const token = createJwt(user.user_id);
       res.cookie("token", token, {
         httpOnly: true,
         secure: false,
@@ -85,7 +84,7 @@ class AuthController {
       return res.status(200).json({
         message: "Sign in successful",
         user: {
-          userId: user.userId,
+          user_id: user.user_id,
           username: user.username,
           email: user.email,
           avatar: {
@@ -102,15 +101,15 @@ class AuthController {
   //[GET] /auth/me
   async me(req, res, next) {
     try {
-      const userId = req.user.userId;
-      const user = await User.findOne({ userId });
+      const user_id = req.user.user_id;
+      const user = await User.findOne({ user_id });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
       }
 
       return res.status(200).json({
         user: {
-          displayname: user.displayname,
+          display_name: user.display_name,
           username: user.username,
           email: user.email,
           avatar: {
@@ -158,32 +157,30 @@ class AuthController {
       const encryptedCbc = createCbc(accessToken);
 
       let user = await User.findOne({
-        githubId: githubUser.githubId,
+        github_id: githubUser.github_id,
       });
 
       if (!user) {
         user = await User.findOne({
           email: githubUser.email,
         });
-
         if (user) {
           //link github vao acc hien tai
-          user.githubId = githubUser.githubId;
+          user.github_id = githubUser.github_id;
           await user.save();
         } else {
-          const userId = await getNextUserId();
-
+          const user_id = await getNextUserId();
           user = await User.create({
-            displayname: githubUser.username,
-            userId,
-            githubId: githubUser.githubId,
+            display_name: githubUser.username,
+            user_id,
+            github_id: githubUser.github_id,
             username: githubUser.username,
             email: githubUser.email,
-            encryptedToken: encryptedCbc,
+            encrypted_token: encryptedCbc,
           });
         }
       }
-      const token = createJwt(user.userId);
+      const token = createJwt(user.user_id);
       res.cookie("token", token, {
         httpOnly: true,
         secure: false,
@@ -193,7 +190,6 @@ class AuthController {
       return res.redirect(`${clientUrlDev}/dashboard`);
     } catch (error) {
       console.error("GITHUB authorization error :", error);
-
       return res.status(500).json({ message: "Github authorization failed!" });
     }
   }

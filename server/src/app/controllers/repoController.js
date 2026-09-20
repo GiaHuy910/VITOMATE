@@ -17,7 +17,6 @@ class RepoController {
           id: repository.id,
           name: repository.name,
           owner: repository.owner.login,
-          language: repository.language,
           defaultBranch: repository.default_branch,
         },
       });
@@ -28,24 +27,23 @@ class RepoController {
   //[POST] /repo/store
   async store(req, res) {
     try {
-      const { repositoryId, name, owner, defaultBranch, language } = req.body;
-      const userId = req.user.userId;
-      const user = await User.findOne({ userId });
+      const { repositoryId, name, owner, defaultBranch } = req.body;
+      const user_id = req.user.user_id;
+      const user = await User.findOne({ user_id });
       if (!user) {
         return res.status(401).json({ message: "Unauthorized!" });
       }
       const repo_id = await getNextRepoId();
 
       const repo = await Repo.create({
-        username: user.username,
+        user_id: user.user_id,
         repo_id,
         github_repo_id: repositoryId,
         owner_name: owner,
         repo_name: name,
         branch_default: defaultBranch,
-        language: language,
       });
-      console.log("Repository stored successfully:", repo);
+
       return res.status(201).json({
         message: "Account created successfully",
         repository: {
@@ -53,7 +51,6 @@ class RepoController {
           owner: repo.owner_name,
           repo_id: repo_id,
           branch: repo.branch_default,
-          language: repo.language,
         },
       });
     } catch (error) {

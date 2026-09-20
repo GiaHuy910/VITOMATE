@@ -17,13 +17,12 @@ export const checkGithubRepo = async (repoUrl: string) => {
   }
   return data;
 };
-
+//nhớ sửa lại sau
 type deployForm = {
   repositoryId: Number;
   name: string;
   owner: string;
   defaultBranch: string;
-  language: string;
 };
 
 export const deployRepository = async (body: deployForm) => {
@@ -35,6 +34,7 @@ export const deployRepository = async (body: deployForm) => {
     credentials: "include",
     body: JSON.stringify(body),
   });
+
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.message || "Invalid repository");
@@ -42,7 +42,7 @@ export const deployRepository = async (body: deployForm) => {
 
   //unknown purpose yet, temporarily set here
   const deployForm = {
-    repo_id: data.repository.repo_id,
+    repoId: data.repository.repoId,
     owner: data.repository.owner,
     name: data.repository.name,
     branch: data.repository.branch,

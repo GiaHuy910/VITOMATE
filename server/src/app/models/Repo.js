@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const RepoSchema = new Schema(
   {
-    username: { type: String, unique: false, required: true },
+    user_id: { type: String, required: true },
     repo_id: { type: Number, unique: true, required: false },
     github_repo_id: { type: Number, required: true },
     owner_name: { type: String, required: true },
