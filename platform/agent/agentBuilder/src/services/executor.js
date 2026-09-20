@@ -5,8 +5,8 @@ const builderHandler = require("../handlers/builder");
 const systemHandler = require("../handlers/system");
 
 // Nguồn cấu hình (nên lấy từ process.env)
-const REGISTRY_URL = process.env.REGISTRY_URL || "192.168.1.8:5000";
-const APPS_DIR = process.env.APPS_DIR || "/opt/agent/apps";
+const REGISTRY_URL = process.env.REGISTRY_URL;
+const APPS_DIR = "/opt/agent/apps";
 
 // Logic cho job BUILD_AND_PACK
 async function processBuildAndPack(job) {
@@ -14,13 +14,12 @@ async function processBuildAndPack(job) {
     owner,
     name,
     branch = "main",
-    imageTag: customTag,
+    imageTag: jobImageTag,
     registryAuth,
   } = job.payload;
 
-  const repoUrl =
-    job.payload.repoUrl || `https://github.com/${owner}/${name}.git`;
-  const imageTag = customTag || `${REGISTRY_URL}/${owner}/${name}:${branch}`;
+  const repoUrl = `https://github.com/${owner}/${name}.git`;
+  const imageTag = jobImageTag;
   const buildDir = path.join(APPS_DIR, String(job.id));
 
   try {

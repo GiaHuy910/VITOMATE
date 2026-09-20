@@ -17,39 +17,12 @@ const bootstrapworker = async (req, res) => {
       });
     }
 
-    const workerRole = role.toUpperCase(); // BUILDER hoặc DEPLOY
-    const prefix =
-      workerRole === "BUILDER" ? "worker-builder" : "worker-deploy";
-
-    // 2. Truy vấn DB tìm Worker có workerId tương ứng theo prefix để lấy số thứ tự lớn nhất
-    const latestWorker = await Worker.findOne({
-      workerId: new RegExp(`^${prefix}-\\d+$`, "i"),
-    })
-      .sort({ createdAt: -1 })
-      .select("workerId");
-
-    let nextNumber = 1;
-    if (latestWorker && latestWorker.workerId) {
-      const parts = latestWorker.workerId.split("-");
-      const lastNum = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(lastNum)) {
-        nextNumber = lastNum + 1;
-      }
-    }
-
-    // Định dạng số thứ tự thành 2 chữ số (VD: 01, 02, 09, 10...)
-    const formattedNum = String(nextNumber).padStart(2, "0");
-    const generatedWorkerId = `${prefix}-${formattedNum}`;
-
-    console.log(`[*] Bắt đầu Bootstrap Worker worker: ${host}...`);
-    const targetworker = await provisionService.bootstrapWorker(
-      req.body,
-      generatedWorkerId,
-    );
+    console.log(`[*] Bắt đầu Bootstrap Worker: ${host}...`);
+    const targetworker = await provisionService.bootstrapWorker(req.body);
 
     return res.status(200).json({
       success: true,
-      message: `Cài đặt và kích hoạt Worker worker [${targetworker.id}] thành công!`,
+      message: `Cài đặt và kích hoạt Worker [${targetworker.id}] thành công!`,
       worker: {
         id: targetworker.id,
         host: targetworker.host,

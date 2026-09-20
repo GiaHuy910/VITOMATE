@@ -1,13 +1,25 @@
 const config = {
   master: {
-    ip: process.env.IP_MASTER,
-    port: Number(process.env.PORT_MASTER) || 4000,
-    url: process.env.URL_MASTER,
+    ip: process.env.MASTER_IP,
+    port: Number(process.env.MASTER_PORT),
+    url: process.env.MASTER_URL,
   },
 
-  server_1_url_dev: process.env.server_1_url_dev,
+  server_1_url_dev: process.env.SERVER_1_URL_DEV,
 
-  environment: process.env.NODE_ENV || "development",
+  worker: {
+    primaryKeyPath: process.env.WORKER_PRIMARY_KEY_PATH,
+  },
+
+  platform: {
+    apikey: process.env.PLATFORM_API_KEY,
+  },
+
+  environment: process.env.NODE_ENV,
+
+  registry: {
+    url: process.env.REGISTRY_URL,
+  },
 };
 
 module.exports = config;

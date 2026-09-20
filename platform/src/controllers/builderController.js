@@ -33,26 +33,29 @@ const pollJob = async (req, res) => {
  */
 const initProject = async (req, res) => {
   try {
-    const { repo_id, owner, name, branch } = req.body;
+    const { app_id, deployment_id, owner, name, branch, env_vars } = req.body;
 
     // Validate dữ liệu truyền lên
-    if (!repo_id || !owner || !name) {
+    if (!app_id || !deployment_id || !owner || !name) {
       return res.status(400).json({
         success: false,
-        error: "Thiếu thông tin bắt buộc: repo_id, owner hoặc name.",
+        error:
+          "Thiếu thông tin bắt buộc: app_id, deployment_id, owner hoặc name.",
       });
     }
 
     // 1. THÊM AWAIT Ở ĐÂY để lấy đúng Object Job từ DB
     const newJobPayload = await jobService.createBuildJob({
-      repo_id: repo_id,
+      app_id: app_id,
+      deployment_id: deployment_id,
       owner: owner,
       name: name,
       branch: branch || "main",
+      env_vars: env_vars || {},
     });
 
     console.log(
-      `[Platform] Đã tiếp nhận Project [${repo_id}], đẩy Job ${newJobPayload.id} vào Queue.`,
+      `[Platform] Đã tiếp nhận Project [${app_id}], đẩy Job ${newJobPayload.id} vào Queue.`,
     );
 
     return res.status(200).json({

@@ -2,13 +2,13 @@ const mongoose = require("mongoose");
 
 const workerSchema = new mongoose.Schema(
   {
-    workerId: { type: String, required: true, unique: true, index: true },
-    ip: { type: String, required: true },
+    worker_id: { type: String, required: true, unique: true, index: true },
+    host: { type: String, required: true },
 
     // Cấu hình phần cứng
-    cpuCores: { type: Number, required: true },
-    totalRamMb: { type: Number, required: true },
-    freeDiskGb: { type: Number, required: true },
+    cpu_cores: { type: Number, required: false },
+    total_ram_mb: { type: Number, required: false },
+    free_disk_gb: { type: Number, required: false },
 
     // Phân loại vai trò
     role: {
@@ -17,16 +17,22 @@ const workerSchema = new mongoose.Schema(
       required: true,
       index: true, // Đánh index để query tìm worker nhanh hơn
     },
+    // Token hash để xác thực agent
+    agent_token_hash: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
     // Trạng thái vận hành
     status: {
       type: String,
-      enum: ["READY", "BUSY", "OFFLINE"],
+      enum: ["BOOTSTRAPPING", "READY", "BUSY", "OFFLINE"],
       default: "READY",
       index: true,
     },
 
-    activeJobsCount: { type: Number, default: 0 },
+    active_jobs_count: { type: Number, default: 0 },
     lastSeen: { type: Date, default: Date.now },
   },
   { timestamps: true },
@@ -35,15 +41,15 @@ const workerSchema = new mongoose.Schema(
 // 1. Static Method: Tìm Worker rảnh nhất theo Role
 workerSchema.statics.findBestAvailable = function (role) {
   return this.findOne({ role, status: "READY" }).sort({
-    activeJobsCount: 1,
-    totalRamMb: -1,
+    active_jobs_count: 1,
+    total_ram_mb: -1,
   });
 };
 
 // 2. Instance Method: Đánh dấu Worker chuyển sang trạng thái bận
 workerSchema.methods.markAsBusy = function () {
   this.status = "BUSY";
-  this.activeJobsCount += 1;
+  this.active_jobs_count += 1;
   return this.save();
 };
 

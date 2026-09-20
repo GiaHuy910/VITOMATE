@@ -19,19 +19,12 @@ app.use(express.json());
 
 route(app);
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
-
 setInterval(() => {
   reassignTimedOutDeployJobs(30).catch((err) =>
     console.error("[Watchdog Error]:", err.message),
   );
 }, 10000);
 
-app.listen(config.port, () => {
-  console.log(`VITOMATE Platform is running on port ${config.port}`);
+app.listen(config.master.port, () => {
+  console.log(`VITOMATE Platform is running on port ${config.master.port}`);
 });
