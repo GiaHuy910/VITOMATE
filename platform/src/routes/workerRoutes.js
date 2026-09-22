@@ -3,7 +3,6 @@ const router = express.Router();
 
 const provisionController = require("../controllers/provisionController");
 const workerController = require("../controllers/workerController");
-const authenticateAgent = require("../middleware/agentAuth");
 
 // API kích hoạt SSH Bootstrap
 router.post("/bootstrap", provisionController.bootstrapworker);

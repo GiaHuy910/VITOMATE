@@ -2,15 +2,14 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
-const config = require("./config");
+dotenv.config();
+
+const config = require("./config/config");
 const route = require("./routes");
 const { reassignTimedOutDeployJobs } = require("./services/buildJobService");
 const db = require("./config/db/mongodb");
 
 const app = express();
-
-//connect to env
-dotenv.config();
 
 // Connect to the database
 db.connect();

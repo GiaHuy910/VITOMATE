@@ -15,8 +15,6 @@ const config = {
     apikey: process.env.PLATFORM_API_KEY,
   },
 
-  environment: process.env.NODE_ENV,
-
   registry: {
     url: process.env.REGISTRY_URL,
   },

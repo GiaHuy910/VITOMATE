@@ -1,7 +1,7 @@
 const { Client } = require("ssh2");
 const fs = require("fs");
 const path = require("path");
-const config = require("../config");
+const config = require("../config/config");
 
 class SSHService {
   async uploadDir(sftp, localDir, remoteDir) {
