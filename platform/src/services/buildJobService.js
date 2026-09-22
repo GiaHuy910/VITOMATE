@@ -1,6 +1,6 @@
 const Job = require("../models/job");
 const Worker = require("../models/Workers");
-const App = require("../models/deploymentOrderjs");
+const App = require("../models/deploymentOrder.js");
 const config = require("../config/config");
 const JobCounter = require("../models/JobCounter");
 

@@ -1,5 +1,4 @@
 const provisionService = require("../services/provisionService");
-const Worker = require("../models/Workers");
 
 /**
  * API Bootstrap một máy chủ mới trở thành Worker

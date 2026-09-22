@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const Worker = require("../models/workers");
+const Worker = require("../models/Workers");
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");

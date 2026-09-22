@@ -23,7 +23,4 @@ const pendingWorkerSchema = new mongoose.Schema(
   },
 );
 
-// Tự động xóa PendingWorker khi expires_at đến hạn
-pendingWorkerSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
 module.exports = mongoose.model("PendingWorker", pendingWorkerSchema);

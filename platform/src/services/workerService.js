@@ -125,7 +125,6 @@ const updateHeartbeat = async (workerId) => {
 };
 
 module.exports = {
-  createPendingWorker,
   upsertWorker,
   deletePendingWorker,
   findAvailableWorker,
