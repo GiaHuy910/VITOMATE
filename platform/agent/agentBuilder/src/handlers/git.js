@@ -14,7 +14,7 @@ function runCommand(command, cwd) {
   });
 }
 
-async function cloneRepository({ repoUrl, branch = "main", buildDir }) {
+async function cloneRepository({ owner, app_name, branch = "main", buildDir }) {
   // Dọn dẹp và tạo mới thư mục chứa source code
   if (fs.existsSync(buildDir)) {
     fs.rmSync(buildDir, { recursive: true, force: true });
@@ -22,20 +22,12 @@ async function cloneRepository({ repoUrl, branch = "main", buildDir }) {
   fs.mkdirSync(buildDir, { recursive: true });
 
   // Đảm bảo URL có dạng HTTPS hợp lệ
-  let formattedUrl = repoUrl;
-  if (
-    !formattedUrl.startsWith("http://") &&
-    !formattedUrl.startsWith("https://")
-  ) {
-    formattedUrl = `https://${formattedUrl}`;
-  }
+  let repoUrl = `https://github.com/${owner}/${app_name}.git`;
 
   // Câu lệnh clone trực tiếp không dùng Token
-  const cloneCmd = `git clone --depth 1 --single-branch --branch ${branch} ${formattedUrl} .`;
+  const cloneCmd = `git clone --depth 1 --single-branch --branch ${branch} ${repoUrl} .`;
 
-  console.log(
-    `[Git Handler] Đang clone repo (${branch}) từ ${formattedUrl}...`,
-  );
+  console.log(`[Git Handler] Đang clone repo (${branch}) từ ${repoUrl}...`);
   const result = await runCommand(cloneCmd, buildDir);
 
   return {

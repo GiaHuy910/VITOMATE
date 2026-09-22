@@ -2,6 +2,8 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
+const config = require("../config/config");
+
 function runCommand(command, cwd) {
   return new Promise((resolve, reject) => {
     exec(
@@ -68,25 +70,11 @@ function generateDefaultDockerfile(buildDir) {
   );
 }
 
-async function buildAndPushImage({ buildDir, imageTag, registryAuth }) {
+async function buildAndPushImage({ buildDir, imageTag }) {
   // 1. Tự động sinh Dockerfile nếu chưa có
   generateDefaultDockerfile(buildDir);
 
   let buildLogs = "";
-
-  // 2. Đăng nhập Docker Registry nếu có thông tin Auth
-  if (
-    registryAuth &&
-    registryAuth.server &&
-    registryAuth.username &&
-    registryAuth.password
-  ) {
-    console.log(
-      `[Builder Handler] Đang đăng nhập Docker Registry: ${registryAuth.server}...`,
-    );
-    const loginCmd = `echo "${registryAuth.password}" | docker login ${registryAuth.server} -u "${registryAuth.username}" --password-stdin`;
-    await runCommand(loginCmd, buildDir);
-  }
 
   // 3. Tiến hành Docker Build
   console.log(`[Builder Handler] Bắt đầu build image: ${imageTag}...`);

@@ -5,34 +5,31 @@ const { handleJob } = require("./services/executor");
 console.log(`[🚀 AGENT DEPLOY] Khởi chạy Deploy Agent [${config.AGENT_ID}]...`);
 console.log(`[🔗 AGENT DEPLOY] Kết nối tới Master: ${config.MASTER_URL}`);
 
-let isProcessing = false;
+async function runAgent() {
+  while (true) {
+    try {
+      const job = await pollMaster();
 
-async function tick() {
-  // Nếu đang xử lý 1 Job Deploy thì bỏ qua đợt Poll này để tránh chồng việc
-  if (isProcessing) return;
+      if (job) {
+        console.log(`[📥 LỆNH MỚI TỪ MASTER]:`, job);
 
-  try {
-    const job = await api.pollMaster();
+        // Agent bận ở đây
+        const result = await handleJob(job);
 
-    if (job) {
-      isProcessing = true;
-      console.log(`[📥 LỆNH MỚI TỪ MASTER]:`, job);
+        // Chỉ sau khi hoàn thành Job mới report
+        await reportJobResultToMaster(result);
 
-      // 1. Thực thi Deploy Container
-      const result = await handleJob(job);
-
-      // 2. Lấy jobId từ result hoặc từ job ban đầu
-      const targetJobId = result.jobId || job.jobId || job.id;
-
-      // 3. Gửi báo cáo kết quả + URL truy cập về Master
-      await api.reportJobResultToMaster(targetJobId, result);
+        console.log(
+          `[✅ JOB ${job.job_id}] Hoàn thành. Agent sẵn sàng nhận Job tiếp theo.`,
+        );
+      }
+    } catch (err) {
+      console.error(`[⚠️ LỖI AGENT]: ${err.message}`);
     }
-  } catch (err) {
-    console.error("[❌ LOOP ERROR]:", err.message);
-  } finally {
-    isProcessing = false;
+
+    // Chờ trước khi poll lần tiếp theo
+    await new Promise((resolve) => setTimeout(resolve, config.POLL_INTERVAL));
   }
 }
-tick();
-// Bắt đầu vòng lặp Poll công việc từ Master
-setInterval(tick, config.POLL_INTERVAL);
+
+runAgent();

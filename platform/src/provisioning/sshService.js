@@ -184,7 +184,6 @@ class SSHService {
       );
       await this.uploadDir(sftp, sourceAgentDir, "/tmp/agent");
 
-      // Truyền biến IS_UPDATE để bootstrap.sh biết đường xử lý
       const command = `
         sudo -S env \
         MASTER_URL="${masterUrl}" \
