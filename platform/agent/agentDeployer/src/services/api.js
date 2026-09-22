@@ -36,8 +36,7 @@ async function pollMaster() {
  * Gửi báo cáo kết quả Deploy (Thành công / Thất bại) về Master
  */
 async function reportJobResultToMaster(jobId, result) {
-  // Tránh lỗi undefined nếu jobId rỗng
-  const safeJobId = jobId || result.jobId || result.id;
+  const url = `${config.MASTER_URL}/api/deployers/callback`;
 
   const payload = {
     jobId: safeJobId,
@@ -48,7 +47,7 @@ async function reportJobResultToMaster(jobId, result) {
   const masterUrl = config.MASTER_URL;
 
   try {
-    const response = await fetch(`${masterUrl}/api/deployers/callback`, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

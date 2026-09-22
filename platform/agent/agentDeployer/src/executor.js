@@ -1,5 +1,5 @@
-const deployHandler = require("../handlers/deploy");
-const systemHandler = require("../handlers/system");
+const deployHandler = require("./handlers/deploy");
+const systemHandler = require("./handlers/system");
 const os = require("os");
 
 /**
@@ -19,7 +19,7 @@ function getWorkerIp() {
 
 async function processDeployApp(job) {
   const jobId = job.jobId || job.id;
-  const payload = job.payload || job || {}; // 🟢 Tránh lỗi payload null
+  const payload = job.payload || job || {};
 
   const {
     imageTag,

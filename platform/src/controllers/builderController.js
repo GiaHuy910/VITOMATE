@@ -44,7 +44,6 @@ const initProject = async (req, res) => {
       });
     }
 
-    // 1. THÊM AWAIT Ở ĐÂY để lấy đúng Object Job từ DB
     const newJobPayload = await jobService.createBuildJob({
       app_id: app_id,
       deployment_id: deployment_id,
@@ -55,14 +54,14 @@ const initProject = async (req, res) => {
     });
 
     console.log(
-      `[Platform] Đã tiếp nhận Project [${app_id}], đẩy Job ${newJobPayload.id} vào Queue.`,
+      `[Platform] Đã tiếp nhận Project [${app_id}], đẩy Job ${newJobPayload.job_id} vào Queue.`,
     );
 
     return res.status(200).json({
       success: true,
       message:
         "Khởi tạo Project thành công, tác vụ Build đã được đưa vào hàng đợi.",
-      jobId: newJobPayload.id,
+      jobId: newJobPayload.job_id,
     });
   } catch (error) {
     console.error("[❌ INIT PROJECT ERROR]:", error.message);

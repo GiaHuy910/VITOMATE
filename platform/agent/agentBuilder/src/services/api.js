@@ -25,7 +25,7 @@ async function pollMaster() {
 }
 
 async function reportJobResultToMaster(result) {
-  const url = `${process.env.MASTER_URL}/api/builders/callback`;
+  const url = `${config.MASTER_URL}/api/builders/callback`;
 
   try {
     const res = await fetch(url, {

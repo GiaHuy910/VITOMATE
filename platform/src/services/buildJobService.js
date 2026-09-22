@@ -1,43 +1,45 @@
 const Job = require("../models/job");
 const Worker = require("../models/Workers");
-const App = require("../models/app");
+const App = require("../models/deploymentOrderjs");
 const config = require("../config/config");
 const JobCounter = require("../models/JobCounter");
 
 /**
  * Tạo Build Job mới và lưu vào MongoDB
  */
-async function createBuildJob({ repo_id, owner, name, branch }) {
-  const jobId = await JobCounter.findByIdAndUpdate(
+async function createBuildJob({
+  app_id,
+  deployment_id,
+  owner,
+  name,
+  branch,
+  env_vars,
+}) {
+  const job_id = await JobCounter.findByIdAndUpdate(
     "job",
     { $inc: { sequence: 1 } },
     { new: true, upsert: true },
   );
 
-  const imageTag = `${config.registry.url}/apps/${repo_id}:${branch || "latest"}`;
+  const image_tag = `${config.registry.url}/apps/${repo_id}:${branch || "latest"}`;
 
   const newJob = await Job.create({
-    jobId,
-    repo_id,
+    job_id: job_id.sequence,
+    app_id: app_id,
+    deployment_id: deployment_id,
     owner,
-    appName: name,
+    app_name: name,
     branch: branch || "main",
-    imageTag,
+    env_vars: env_vars || {},
+    image_tag: image_tag,
     status: "PENDING",
   });
 
-  console.log(`[Platform Queue] Đã thêm Job mới vào DB: ${newJob.jobId}`);
+  console.log(`[Platform Queue] Đã thêm Job mới vào DB: ${newJob.job_id}`);
 
   return {
-    jobId: newJob.jobId,
+    job_id: newJob.job_id,
     type: "BUILD_AND_PACK",
-    payload: {
-      repo_id: newJob.repo_id,
-      owner: newJob.owner,
-      name: newJob.appName,
-      branch: newJob.branch,
-      imageTag: newJob.imageTag,
-    },
   };
 }
 
@@ -57,14 +59,14 @@ async function getNextJob() {
   if (!job) return null;
 
   return {
-    jobId: job.jobId,
+    job_id: job.job_id,
     type: "BUILD_AND_PACK",
     payload: {
       repo_id: job.repo_id,
       owner: job.owner,
-      name: job.appName,
+      name: job.app_name,
       branch: job.branch,
-      imageTag: job.imageTag,
+      imageTag: job.image_tag,
     },
   };
 }
