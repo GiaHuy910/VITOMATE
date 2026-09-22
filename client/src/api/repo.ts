@@ -40,14 +40,15 @@ export const deployRepository = async (body: deployForm) => {
     throw new Error(data.message || "Invalid repository");
   }
 
+  //nhớ sửa sau
   //unknown purpose yet, temporarily set here
   const deployForm = {
-    repoId: data.repository.repoId,
+    repoId: data.repository.repo_id,
     owner: data.repository.owner,
     name: data.repository.name,
     branch: data.repository.branch,
   };
-  await fetch(`http://localhost:4000/api/builders/init`, {
+  await fetch(`${baseApi}/app/deploy`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -55,6 +56,5 @@ export const deployRepository = async (body: deployForm) => {
     credentials: "include",
     body: JSON.stringify(deployForm),
   });
-
   return data;
 };
