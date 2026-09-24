@@ -36,9 +36,9 @@ const pollJob = async (req, res) => {
  */
 const callback = async (req, res) => {
   try {
-    const { jobId, success, error } = req.body;
+    const { job_id, success, error } = req.body;
 
-    if (!jobId) {
+    if (!job_id) {
       return res
         .status(400)
         .json({ success: false, error: "Thiếu jobId trong payload" });
@@ -48,7 +48,7 @@ const callback = async (req, res) => {
     const updatedJob = await jobService.completeAndRemoveJob(req.body);
 
     console.log(
-      `[Platform Master] Job [${jobId}] hoàn tất! Trạng thái: ${success ? "SUCCESS" : "FAILED"}`,
+      `[Platform Master] Job [${job_id}] hoàn tất! Trạng thái: ${success ? "SUCCESS" : "FAILED"}`,
     );
 
     return res.status(200).json({

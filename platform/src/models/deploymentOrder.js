@@ -22,8 +22,6 @@ const DeploymentSchema = new Schema(
 
         image_tag: { type: String, default: null },
 
-        image_tag: { type: String, default: null },
-
         job_id: { type: String, default: null },
 
         worker_id: { type: String, default: null },

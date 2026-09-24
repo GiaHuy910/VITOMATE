@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const Worker = require("../models/Workers");
+const Worker = require("../models/workers");
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -66,13 +66,13 @@ const authenticate = async (req, res, next) => {
      */
 
     const worker = await Worker.findOne({
-      agentTokenHash: receivedTokenHash,
+      agent_token_hash: receivedTokenHash,
     });
 
     if (worker) {
       req.auth = {
         type: "worker",
-        workerId: worker.workerId,
+        worker_id: worker.worker_id,
         role: worker.role,
       };
 

@@ -2,12 +2,12 @@ const workerService = require("../services/workerService");
 
 const registerWorker = async (req, res) => {
   try {
-    const { workerId, ip, role } = req.body;
+    const { worker_id, host, role } = req.body;
 
-    if (!workerId || !ip || !role) {
+    if (!worker_id || !host || !role) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu thông tin bắt buộc: workerId, ip hoặc role!",
+        message: "Thiếu thông tin bắt buộc: worker_id, host hoặc role!",
       });
     }
 
@@ -15,7 +15,7 @@ const registerWorker = async (req, res) => {
     const updatedWorker = await workerService.upsertWorker(req.body);
 
     console.log(
-      `[MongoDB] 🟢 Đã đăng ký/cập nhật Worker [${role}]: ${workerId} (${ip})`,
+      `[MongoDB] 🟢 Đã đăng ký/cập nhật Worker [${role}]: ${worker_id} (${host})`,
     );
 
     return res.status(200).json({
@@ -34,16 +34,16 @@ const registerWorker = async (req, res) => {
 
 const getWorkers = async (req, res) => {
   try {
-    const workerId = req.params.id || req.query.id;
+    const worker_id = req.params.id || req.query.id;
 
     // Trường hợp 1: Lấy Worker theo ID
-    if (workerId) {
-      const worker = await workerService.getWorkerById(workerId);
+    if (worker_id) {
+      const worker = await workerService.getWorkerById(worker_id);
 
       if (!worker) {
         return res.status(404).json({
           success: false,
-          message: `Không tìm thấy Worker với ID: ${workerId}`,
+          message: `Không tìm thấy Worker với ID: ${worker_id}`,
         });
       }
 

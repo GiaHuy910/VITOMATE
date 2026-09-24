@@ -9,10 +9,10 @@ const bootstrapworker = async (req, res) => {
     const { host, username, password, role } = req.body;
 
     // Validate thông tin SSH bắt buộc
-    if (!host || !username || !password) {
+    if (!host) {
       return res.status(400).json({
         success: false,
-        error: "Thiếu thông tin kết nối SSH: host, username, hoặc password.",
+        error: "Thiếu thông tin kết nối SSH: host, username, password, role.",
       });
     }
 
@@ -21,11 +21,11 @@ const bootstrapworker = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Cài đặt và kích hoạt Worker [${targetworker.id}] thành công!`,
+      message: `Cài đặt và kích hoạt Worker [${targetworker.worker_id}] thành công!`,
       worker: {
-        id: targetworker.id,
+        worker_id: targetworker.worker_id,
         host: targetworker.host,
-        status: "BOOTSTRAPPING",
+        status: targetworker.status,
       },
     });
   } catch (error) {

@@ -33,7 +33,7 @@ const workerSchema = new mongoose.Schema(
     },
 
     active_jobs_count: { type: Number, default: 0 },
-    lastSeen: { type: Date, default: Date.now },
+    last_seen: { type: Date, default: Date.now },
   },
   { timestamps: true },
 );
