@@ -47,6 +47,7 @@ export const deployRepository = async (body: deployForm) => {
     owner: data.repository.owner,
     name: data.repository.name,
     branch: data.repository.branch,
+    //thieu env
   };
   await fetch(`${baseApi}/app/deploy`, {
     method: "POST",
