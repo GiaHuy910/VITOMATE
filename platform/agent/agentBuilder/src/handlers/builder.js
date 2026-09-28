@@ -2,18 +2,33 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const config = require("../config/config");
-
 function runCommand(command, cwd) {
   return new Promise((resolve, reject) => {
+    console.log("[runCommand] command:", command);
+    console.log("[runCommand] cwd:", cwd);
+
     exec(
       command,
-      { cwd, maxBuffer: 1024 * 1024 * 20 },
+      {
+        cwd,
+        maxBuffer: 1024 * 1024 * 20,
+      },
       (error, stdout, stderr) => {
         if (error) {
-          return reject({ error: error.message, stderr, stdout });
+          console.error("[runCommand] Command failed!");
+          console.error("[runCommand] error:", error.message);
+          console.error("[runCommand] stderr:", stderr);
+          console.error("[runCommand] stdout:", stdout);
+
+          return reject(
+            new Error(stderr?.trim() || error.message || "Command failed"),
+          );
         }
-        resolve({ stdout, stderr });
+
+        resolve({
+          stdout,
+          stderr,
+        });
       },
     );
   });
@@ -70,32 +85,35 @@ function generateDefaultDockerfile(buildDir) {
   );
 }
 
-async function buildAndPushImage({ buildDir, imageTag }) {
+async function buildAndPushImage({ job_id, buildDir, image_tag }) {
   // 1. Tự động sinh Dockerfile nếu chưa có
   generateDefaultDockerfile(buildDir);
 
   let buildLogs = "";
 
   // 3. Tiến hành Docker Build
-  console.log(`[Builder Handler] Bắt đầu build image: ${imageTag}...`);
-  const buildCmd = `docker build -t ${imageTag} .`;
+  console.log(`[Builder Handler] Bắt đầu build image: ${image_tag}...`);
+  const buildCmd = `docker build -t ${image_tag} .`;
   const buildResult = await runCommand(buildCmd, buildDir);
   buildLogs += (buildResult.stdout || "") + "\n" + (buildResult.stderr || "");
 
   // 4. Push Image lên Registry
-  console.log(`[Builder Handler] Đang push image lên Registry: ${imageTag}...`);
-  const pushCmd = `docker push ${imageTag}`;
+  console.log(
+    `[Builder Handler] Đang push image lên Registry: ${image_tag}...`,
+  );
+  const pushCmd = `docker push ${image_tag}`;
   const pushResult = await runCommand(pushCmd, buildDir);
   buildLogs += (pushResult.stdout || "") + "\n" + (pushResult.stderr || "");
 
   // 5. Dọn dẹp Image cục bộ và Dangling layers để giải phóng dung lượng ổ cứng
-  console.log(`[Builder Handler] Dọn dẹp local image: ${imageTag}...`);
-  await runCommand(`docker rmi -f ${imageTag}`, buildDir).catch(() => {});
+  console.log(`[Builder Handler] Dọn dẹp local image: ${image_tag}...`);
+  await runCommand(`docker rmi -f ${image_tag}`, buildDir).catch(() => {});
   await runCommand(`docker image prune -f`, buildDir).catch(() => {});
 
   return {
     success: true,
-    imageTag,
+    job_id,
+    image_tag,
     logs: buildLogs,
   };
 }

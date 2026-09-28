@@ -7,6 +7,8 @@ const builderController = require("../controllers/builderController");
 router.get("/poll", builderController.pollJob);
 // POST /api/builders/init
 router.post("/init", builderController.initProject);
+//POST /api/builders/rollback
+//router.post("rollback", builderController.rollback);
 
 router.post("/callback", builderController.callback);
 

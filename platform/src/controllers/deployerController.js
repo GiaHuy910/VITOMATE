@@ -1,4 +1,5 @@
-const jobService = require("../services/buildJobService");
+const buildJobService = require("../services/buildJobService");
+const deployJobService = require("../services/deployJobService");
 
 /**
  * GET /api/deployers/poll?worker_id=xxx
@@ -6,24 +7,23 @@ const jobService = require("../services/buildJobService");
  */
 const pollJob = async (req, res) => {
   try {
-    const { worker_id } = req.query;
+    const worker_id = req.query.worker_id;
 
     if (!worker_id) {
       return res.status(400).json({ success: false, error: "Thiếu worker_id" });
     }
 
-    const job = await jobService.getDeployJobForWorker(worker_id);
+    const job = await deployJobService.getDeployJobForWorker(worker_id);
 
     if (!job) {
-      // Không có việc -> Trả về 204 No Content
       return res.status(204).end();
     }
 
     console.log(
-      `[Platform Master] Đã giao Deploy Job [${job.jobId}] cho Deployer Worker: ${worker_id}`,
+      `[Platform Master] Đã giao Deploy Job [${job.job_id}] cho Deployer Worker: ${worker_id}`,
     );
 
-    return res.status(200).json({ success: true, job });
+    return res.status(200).json(job);
   } catch (error) {
     console.error("[❌ DEPLOY POLL ERROR]:", error.message);
     return res.status(500).json({ success: false, error: error.message });
@@ -36,25 +36,53 @@ const pollJob = async (req, res) => {
  */
 const callback = async (req, res) => {
   try {
-    const { job_id, success, error } = req.body;
+    const {
+      job_id,
+      app_id,
+      worker_id,
+      container_port,
+      public_url,
+      deployment_order,
+      branch,
+      commit_hash,
+      image_tag,
+      env_vars,
+      success,
+      error,
+    } = req.body;
+
+    console.log("job_id: ", job_id);
 
     if (!job_id) {
       return res
         .status(400)
-        .json({ success: false, error: "Thiếu jobId trong payload" });
+        .json({ success: false, error: "Thiếu job_id trong payload" });
     }
 
-    // 🟢 Truyền toàn bộ payload (bao gồm publicUrl, port, containerId, logs) vào Service
-    const updatedJob = await jobService.completeAndRemoveJob(req.body);
+    const updateAppAndRemoveJob = await deployJobService.handleDeployerCallback(
+      {
+        job_id,
+        app_id,
+        worker_id,
+        container_port,
+        public_url,
+        deployment_order,
+        branch,
+        commit_hash,
+        image_tag,
+        env_vars,
+        success,
+        error,
+      },
+    );
 
     console.log(
-      `[Platform Master] Job [${job_id}] hoàn tất! Trạng thái: ${success ? "SUCCESS" : "FAILED"}`,
+      `[Platform Master] Job hoàn tất! Trạng thái: ${success ? "SUCCESS" : "FAILED"}`,
     );
 
     return res.status(200).json({
       success: true,
-      message: "Đã cập nhật trạng thái Job thành công.",
-      job: updatedJob,
+      message: "Đã cập nhật trạng thái App thành công.",
     });
   } catch (error) {
     console.error("[❌ COMPLETE JOB ERROR]:", error.message);

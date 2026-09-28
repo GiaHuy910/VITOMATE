@@ -6,6 +6,7 @@ INSTALL_DIR="/opt/agent"
 MASTER_URL="${MASTER_URL:?MASTER_URL is required}"
 REGISTRY_URL="${REGISTRY_URL:?REGISTRY_URL is required}"
 WORKER_ID="${WORKER_ID:?WORKER_ID is required}"
+WORKER_HOST="${WORKER_HOST:?WORKER_HOST is required}"
 AGENT_ROLE="${AGENT_ROLE:?AGENT_ROLE is required}"
 AGENT_TOKEN="${AGENT_TOKEN:?AGENT_TOKEN is required}"
 
@@ -50,7 +51,6 @@ else
       curl wget git docker.io ca-certificates jq nodejs npm
 fi
 
-
 # ==========================================================
 # ĐẢM BẢO DOCKER TỒN TẠI
 # Áp dụng cho cả FIRST BOOTSTRAP và UPDATE
@@ -78,6 +78,32 @@ else
 
 fi
 
+# ==========================================================
+# ĐẢM BẢO NODE.JS TỒN TẠI
+# Áp dụng cho cả FIRST BOOTSTRAP và UPDATE
+# ==========================================================
+
+echo "===> Kiểm tra Node.js..."
+
+if ! command -v node >/dev/null 2>&1; then
+
+    echo "===> Node.js chưa được cài đặt. Đang cài Node.js..."
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update -y
+
+    apt-get install -y \
+      -o Dpkg::Options::="--force-confdef" \
+      -o Dpkg::Options::="--force-confold" \
+      nodejs npm
+
+else
+
+    echo "===> Node.js đã được cài đặt:"
+    node --version
+
+fi
 
 # ==========================================================
 # CẤU HÌNH DOCKER INSECURE REGISTRY
@@ -154,11 +180,24 @@ mkdir -p /etc/paas-agent
 cat <<EOF > /etc/paas-agent/agent.env
 MASTER_URL=${MASTER_URL}
 WORKER_ID=${WORKER_ID}
+WORKER_HOST=${WORKER_HOST}
 AGENT_ROLE=${AGENT_ROLE}
 AGENT_TOKEN=${AGENT_TOKEN}
 EOF
 
 chmod 600 /etc/paas-agent/agent.env
+
+echo "===> Kiểm tra Node.js trước khi khởi động Agent..."
+
+if ! command -v node >/dev/null 2>&1; then
+    echo "[ERROR] Node.js không tồn tại."
+    exit 1
+fi
+
+NODE_BIN=$(command -v node)
+
+echo "[OK] Node.js: ${NODE_BIN}"
+echo "[OK] Version: $(node --version)"
 
 # Tìm file agent.service linh hoạt ở root hoặc folder scripts
 SERVICE_SRC=""
@@ -184,7 +223,7 @@ CPU_CORES=$(nproc)
 TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
 FREE_DISK_GB=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
 
-curl -X POST "${MASTER_URL}/api/workers/register" \
+curl -X POST "http://${MASTER_URL}/api/workers/register" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${AGENT_TOKEN}" \
   -d '{

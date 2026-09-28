@@ -2,6 +2,8 @@ const { exec } = require("child_process");
 const net = require("net");
 const util = require("util");
 
+const config = require("../config/config");
+
 const execPromise = util.promisify(exec);
 
 /**
@@ -45,10 +47,10 @@ async function containerExists(containerName) {
 /**
  * Lấy port host đang được container sử dụng
  */
-async function getContainerPort(containerName, containerPort) {
+async function getContainerPort(containerName, container_port) {
   try {
     const { stdout } = await execPromise(
-      `docker port ${containerName} ${containerPort}`,
+      `docker port ${containerName} ${container_port}`,
     );
 
     const match = stdout.match(/:(\d+)/);
@@ -67,24 +69,19 @@ async function getContainerPort(containerName, containerPort) {
  * Deploy ứng dụng
  */
 async function deployApp({
-  imageTag,
-  app_port,
-  containerPort = 3000,
-  containerName,
-  envVars = {},
+  job_id,
+  app_id,
+  image_tag,
+  container_port,
+  deployment_order,
+  env_vars = {},
   memoryLimit = "512m",
   cpuLimit = "0.5",
 }) {
-  if (!imageTag) {
-    throw new Error("imageTag là bắt buộc");
-  }
-
-  if (!containerName) {
-    throw new Error("containerName là bắt buộc");
-  }
+  worker_id = config.WORKER_ID;
+  const containerName = `app-${String(app_id)}`;
 
   console.log(`[DEPLOY] Bắt đầu deploy ${containerName}`);
-  console.log(`[DEPLOY] Image: ${imageTag}`);
 
   // =========================================================
   // STEP 1: Kiểm tra container cũ
@@ -92,7 +89,7 @@ async function deployApp({
 
   const hasOldContainer = await containerExists(containerName);
 
-  let finalAppPort;
+  let final_app_port;
 
   if (hasOldContainer) {
     console.log(`[DEPLOY] Đã tìm thấy container cũ [${containerName}]`);
@@ -101,33 +98,22 @@ async function deployApp({
      * Nếu deploy lại:
      * cố gắng lấy port cũ để app không bị đổi địa chỉ.
      */
-    finalAppPort =
-      app_port || (await getContainerPort(containerName, containerPort));
+    final_app_port = await getContainerPort(containerName, container_port);
 
-    if (finalAppPort) {
-      console.log(`[DEPLOY] Giữ lại port cũ: ${finalAppPort}`);
+    if (final_app_port) {
+      console.log(`[DEPLOY] Giữ lại port cũ: ${final_app_port}`);
     }
   }
 
   // Nếu là deploy lần đầu hoặc không lấy được port cũ
-  if (!finalAppPort) {
-    finalAppPort = await getRandomFreePort();
+  if (!final_app_port) {
+    final_app_port = await getRandomFreePort();
 
-    console.log(`[DEPLOY] Cấp port mới: ${finalAppPort}`);
+    console.log(`[DEPLOY] Cấp port mới: ${final_app_port}`);
   }
 
   // =========================================================
-  // STEP 2: Pull image mới
-  // =========================================================
-
-  console.log(`[DEPLOY] Step 1: Pulling image [${imageTag}]...`);
-
-  await execPromise(`docker pull ${imageTag}`);
-
-  console.log(`[DEPLOY] Image [${imageTag}] đã được pull thành công.`);
-
-  // =========================================================
-  // STEP 3: Xóa container cũ
+  // STEP 2: Xóa container cũ
   // =========================================================
 
   if (hasOldContainer) {
@@ -143,22 +129,24 @@ async function deployApp({
   }
 
   // =========================================================
-  // STEP 4: Tạo environment variables
+  // STEP 3: Tạo environment variables
   // =========================================================
 
-  let envString = "";
+  console.log(`[DEPLOY] Step 3: Tạo environment variables...`);
 
-  for (const [key, value] of Object.entries(envVars)) {
-    envString += ` -e "${key}=${value}"`;
+  let env_string = "";
+
+  for (const [key, value] of Object.entries(env_vars)) {
+    env_string += ` -e "${key}=${value}"`;
   }
 
   // =========================================================
-  // STEP 5: Chạy container mới
+  // STEP 4: Chạy container mới
   // =========================================================
 
-  console.log(`[DEPLOY] Step 3: Khởi chạy container mới [${containerName}]`);
+  console.log(`[DEPLOY] Step 4: Khởi chạy container mới [${containerName}]`);
 
-  console.log(`[DEPLOY] Port: ${finalAppPort}:${containerPort}`);
+  console.log(`[DEPLOY] Port: ${final_app_port}:${container_port}`);
 
   const runCmd = `
     docker run -d \
@@ -166,12 +154,13 @@ async function deployApp({
     --restart=always \
     --memory="${memoryLimit}" \
     --cpus="${cpuLimit}" \
-    -p ${finalAppPort}:${containerPort} \
-    ${envString} \
-    ${imageTag}
+    -p ${final_app_port}:${container_port} \
+    ${env_string} \
+    ${image_tag}
   `;
 
   let stdout;
+  const public_url = `http://${config.WORKER_HOST}:${final_app_port}`;
 
   try {
     const result = await execPromise(runCmd);
@@ -186,7 +175,7 @@ async function deployApp({
     throw new Error(`Docker run failed: ${error.stderr || error.message}`);
   }
 
-  const containerId = stdout.trim().substring(0, 12);
+  const container_id = stdout.trim().substring(0, 12);
 
   // =========================================================
   // STEP 6: Kiểm tra container
@@ -198,7 +187,9 @@ async function deployApp({
     );
 
     if (status.trim() !== "true") {
-      throw new Error("Container được tạo nhưng không ở trạng thái running.");
+      throw new Error(
+        "[DEPLOY] step 6: Container được tạo nhưng không ở trạng thái running.",
+      );
     }
   } catch (error) {
     console.error(`[DEPLOY] Container mới không chạy thành công.`);
@@ -210,20 +201,21 @@ async function deployApp({
 
   console.log(`[DEPLOY] Container: ${containerName}`);
 
-  console.log(`[DEPLOY] Container ID: ${containerId}`);
+  console.log(`[DEPLOY] Container ID: ${container_id}`);
 
-  console.log(`[DEPLOY] Port: ${finalAppPort}:${containerPort}`);
+  console.log(`[DEPLOY] Port: ${final_app_port}:${container_port}`);
 
-  console.log(`[DEPLOY] Image: ${imageTag}`);
+  console.log(`[DEPLOY] Image: ${image_tag}`);
 
   return {
     success: true,
-    containerId,
-    port: finalAppPort,
-    containerPort,
-    imageTag,
-    containerName,
-    replaced: hasOldContainer,
+    job_id,
+    app_id,
+    worker_id,
+    container_port,
+    public_url,
+    image_tag,
+    deployment_order,
   };
 }
 

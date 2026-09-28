@@ -1,10 +1,12 @@
 const path = require("path");
 const crypto = require("crypto");
+
 const config = require("../config/config");
 const sshService = require("../provisioning/sshService");
-const Workers = require("../models/workers");
 const workerCounter = require("../models/WorkerCounter");
 const tokenService = require("./tokenService");
+
+const Worker = require("../models/Worker");
 
 // Hàm hash SHA-256
 const hashToken = (token) => {
@@ -35,7 +37,7 @@ const bootstrapWorker = async (workerData) => {
   let worker_id;
   let raw_agent_token;
   let hashed_token;
-  const existingWorker = await Workers.findOne({ host })
+  const existingWorker = await Worker.findOne({ host })
     .select("worker_id")
     .lean();
 
@@ -59,7 +61,7 @@ const bootstrapWorker = async (workerData) => {
   hashed_token = hashToken(raw_agent_token);
 
   // 5. Lưu (hoặc cập nhật) thông tin Worker vào MongoDB (Lưu HASH TOKEN, không lưu rawToken)
-  const worker = await Workers.findOneAndUpdate(
+  const worker = await Worker.findOneAndUpdate(
     { worker_id },
     {
       $set: {

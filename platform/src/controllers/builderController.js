@@ -1,26 +1,27 @@
-const jobService = require("../services/buildJobService");
-const Job = require("../models/job"); // Bổ sung import Job Model
+const buildJobService = require("../services/buildJobService");
+const Job = require("../models/Job");
+const App = require("../models/App");
 
 /**
  * Controller xử lý khi Builder Worker Agent gọi GET /api/builders/poll
  */
 const pollJob = async (req, res) => {
   try {
-    const { worker_id } = req.query;
+    const worker_id = req.query.worker_id;
 
     // Lấy Job tiếp theo trong hàng chờ
-    const job = await jobService.getNextJob();
+    const Job = await buildJobService.getNextJob();
 
-    if (!job) {
+    if (!Job) {
       // Không có việc -> Trả về 204 No Content
       return res.status(204).end();
     }
 
     console.log(
-      `[Platform Master] Đã giao Job ${job.id} cho Builder Worker: ${worker_id}`,
+      `[Platform Master] Đã giao Job ${Job.job_id} cho Builder Worker: ${worker_id}`,
     );
 
-    return res.status(200).json(job);
+    return res.status(200).json(Job);
   } catch (error) {
     console.error("[❌ POLL JOB ERROR]:", error.message);
     return res.status(500).json({ success: false, error: error.message });
@@ -33,20 +34,19 @@ const pollJob = async (req, res) => {
  */
 const initProject = async (req, res) => {
   try {
-    const { app_id, deployment_id, owner, name, branch, env_vars } = req.body;
-
-    // Validate dữ liệu truyền lên
-    if (!app_id || !deployment_id || !owner || !name) {
+    const { app_id, deployment_order, owner, name, branch, env_vars } =
+      req.body;
+    if (!app_id || !deployment_order || !owner || !name) {
       return res.status(400).json({
         success: false,
         error:
-          "Thiếu thông tin bắt buộc: app_id, deployment_id, owner hoặc name.",
+          "Thiếu thông tin bắt buộc: app_id, deployment_order, owner, name, env_vars.",
       });
     }
 
-    const newJobPayload = await jobService.createBuildJob({
+    newJobPayload = await buildJobService.createBuildJob({
       app_id: app_id,
-      deployment_id: deployment_id,
+      deployment_order: deployment_order,
       owner: owner,
       name: name,
       branch: branch || "main",
@@ -61,13 +61,57 @@ const initProject = async (req, res) => {
       success: true,
       message:
         "Khởi tạo Project thành công, tác vụ Build đã được đưa vào hàng đợi.",
-      jobId: newJobPayload.job_id,
+      job_id: newJobPayload.job_id,
     });
   } catch (error) {
     console.error("[❌ INIT PROJECT ERROR]:", error.message);
     return res.status(500).json({
       success: false,
       error: error.message || "Khởi tạo Project thất bại.",
+    });
+  }
+};
+
+const rollback = async (req, res) => {
+  try {
+    const { app_id, deployment_order, deployment_rollback, is_rollback } =
+      req.body;
+    if (!app_id || !deployment_order || !deployment_rollback || !is_rollback) {
+      return res.status(400).json({
+        success: false,
+        error: "Thieu thong tin.",
+      });
+    }
+
+    const app = App.findOne({
+      app_id: app_id,
+      deployment: { deployment_order: deployment_rollback },
+    });
+
+    const newJobPayload = await buildJobService.createBuildJob({
+      app_id: app_id,
+      deployment_order: deployment_order,
+      owner: app.owner,
+      name: app.name,
+      branch: app.branch || "main",
+      env_vars: app.env_vars || {},
+    });
+
+    console.log(
+      `[Platform] Đã tiếp nhận Project [${app_id}], đẩy Job ${newJobPayload.job_id} vào Queue.`,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Khởi tạo Project thành công, tác vụ Build đã được đưa vào hàng đợi.",
+      job_id: newJobPayload.job_id,
+    });
+  } catch (error) {
+    console.error("[ROLLBACK PROJECT ERROR]:");
+    return res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 };
@@ -83,12 +127,12 @@ const callback = async (req, res) => {
     if (!job_id) {
       return res.status(400).json({
         success: false,
-        error: "Thiếu thông tin jobId trong payload callback.",
+        error: "Thiếu thông tin job_id trong payload callback.",
       });
     }
 
-    // Chuyển toàn bộ xử lý nghiệp vụ cho jobService
-    const result = await jobService.handleBuilderCallback(req.body);
+    // Chuyển toàn bộ xử lý nghiệp vụ cho buildjobService
+    const result = await buildJobService.handleBuilderCallback(req.body);
 
     return res.status(200).json(result);
   } catch (error) {

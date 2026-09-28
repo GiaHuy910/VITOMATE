@@ -1,17 +1,17 @@
-const Workers = require("../models/workers");
+const Worker = require("../models/Worker");
 
 /**
- * Lấy tất cả Workers, sắp xếp mới nhất lên đầu
+ * Lấy tất cả Worker, sắp xếp mới nhất lên đầu
  */
 const getAllWorkers = async () => {
-  return await Workers.find().sort({ createdAt: -1 });
+  return await Worker.find().sort({ createdAt: -1 });
 };
 
 /**
  * Tìm Worker theo worker_id
  */
 const getWorkerById = async (id) => {
-  return await Workers.findOne({ worker_id: id });
+  return await Worker.findOne({ worker_id: id });
 };
 
 /**
@@ -71,7 +71,7 @@ const upsertWorker = async (workerData) => {
  * 4. Tìm Worker phù hợp nhất để giao Job
  */
 const findAvailableWorker = async (role) => {
-  return await Workers.findOne({
+  return await Worker.findOne({
     role,
     status: "READY",
   }).sort({
@@ -84,7 +84,7 @@ const findAvailableWorker = async (role) => {
  * 5. Cập nhật số lượng Job đang chạy của Worker
  */
 const updateActiveJobs = async (worker_id, increment = 1) => {
-  return await Workers.findOneAndUpdate(
+  return await Worker.findOneAndUpdate(
     { worker_id },
     {
       $inc: {
@@ -101,7 +101,7 @@ const updateActiveJobs = async (worker_id, increment = 1) => {
  * 6. Cập nhật Heartbeat khi Worker gửi ping định kỳ
  */
 const updateHeartbeat = async (worker_id) => {
-  return await Workers.findOneAndUpdate(
+  return await Worker.findOneAndUpdate(
     { worker_id },
     {
       $set: {

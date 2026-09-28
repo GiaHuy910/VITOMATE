@@ -257,6 +257,7 @@ echo '${escapedPublicKey}' >> ~/.ssh/authorized_keys
         MASTER_URL="${masterUrl}" \
         REGISTRY_URL="${registryUrl}" \
         WORKER_ID="${worker_id}" \
+        WORKER_HOST="${host}" \
         AGENT_ROLE="${role}" \
         AGENT_TOKEN="${agentToken}" \
         IS_UPDATE="${!isFirstTime}" \

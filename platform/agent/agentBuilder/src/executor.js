@@ -1,18 +1,18 @@
 const path = require("path");
 const fs = require("fs");
 
-const config = require("../config");
+const config = require("./config/config");
 const gitHandler = require("./handlers/git");
 const builderHandler = require("./handlers/builder");
 const systemHandler = require("./handlers/system");
 
 const handleJob = async (job) => {
-  const { job_id, job_status, owner, app_name, branch, image_tag } = job;
+  const { job_id, status, owner, app_name, branch, image_tag } = job;
 
-  switch (job_status) {
+  switch (status) {
     case "BUILDING":
       console.log(`[JOB ${job_id}] Bắt đầu BUILDING...`);
-      const buildDir = path.join(config.APP_DIR, job_id);
+      const buildDir = path.join(config.APPS_DIR, String(job_id));
       const cloneResult = await gitHandler.cloneRepository({
         owner,
         app_name,
@@ -28,7 +28,12 @@ const handleJob = async (job) => {
         };
       }
 
-      const res = await builderHandler.buildAndPushImage(buildDir, image_tag);
+      const res = await builderHandler.buildAndPushImage({
+        job_id,
+        buildDir,
+        image_tag,
+      });
+
       return res;
     case "GET_INFO":
       console.log(`[JOB ${job_id}] Bắt đầu GET_INFO...`);

@@ -1,32 +1,27 @@
-const Job = require("../models/job");
-const Workers = require("../models/workers");
-const App = require("../models/deploymentOrder.js");
-const config = require("../config/config");
-const JobCounter = require("../models/JobCounter");
+const Job = require("../models/Job");
+const Worker = require("../models/Worker");
+const Config = require("../config/config");
+const GetNextJobId = require("../utils/getNextJobId");
 
 /**
  * Tạo Build Job mới và lưu vào MongoDB
  */
 async function createBuildJob({
   app_id,
-  deployment_id,
+  deployment_order,
   owner,
   name,
   branch,
   env_vars,
 }) {
-  const job_id = await JobCounter.findByIdAndUpdate(
-    "job",
-    { $inc: { sequence: 1 } },
-    { new: true, upsert: true },
-  );
+  const job_id = await GetNextJobId.getNextJobId();
 
-  const image_tag = `${config.registry.url}/apps/${repo_id}:${branch || "latest"}`;
+  const image_tag = `${Config.registry.url}/apps/${app_id}:${deployment_order}`;
 
   const newJob = await Job.create({
-    job_id: job_id.sequence,
+    job_id: job_id,
     app_id: app_id,
-    deployment_id: deployment_id,
+    deployment_order: deployment_order,
     owner,
     app_name: name,
     branch: branch || "main",
@@ -58,32 +53,22 @@ async function getNextJob() {
 
   if (!job) return null;
 
-  return {
-    job_id: job.job_id,
-    type: "BUILD_AND_PACK",
-    payload: {
-      repo_id: job.repo_id,
-      owner: job.owner,
-      name: job.app_name,
-      branch: job.branch,
-      imageTag: job.image_tag,
-    },
-  };
+  return job;
 }
 
 /**
  * Xử lý Callback kết quả từ Builder Worker
  */
 const handleBuilderCallback = async (callbackData) => {
-  const { jobId, imageTag, success, logs, error } = callbackData;
+  const { job_id, image_tag, success, logs, error } = callbackData;
 
   // 1. Trường hợp Build thất bại
   if (!success) {
-    console.error(`[BuildJobService] Job [${jobId}] Build thất bại:`, error);
+    console.error(`[BuildJobService] Job [${job_id}] Build thất bại:`, error);
     await Job.findOneAndUpdate(
-      { jobId },
-      { $set: { status: "FAILED", logs: error || logs } },
-      { returnDocument: "after" }, // 🟢 Đã chuẩn hóa
+      { job_id },
+      { $set: { status: "FAILED", logs: error } },
+      { returnDocument: "after" },
     );
     return {
       success: false,
@@ -91,25 +76,19 @@ const handleBuilderCallback = async (callbackData) => {
     };
   }
 
-  console.log(
-    `[BuildJobService] Job [${jobId}] Build thành công. Tag: ${imageTag}`,
-  );
+  console.log(`[BuildJobService] Job [${job_id}] Build thành công.`);
 
   // 2. Tìm Deploy Worker phù hợp nhất từ DB
-  const targetDeployWorker = await Workers.findOne({
-    role: { $in: ["DEPLOY", "DEPLOYER"] },
-    status: "READY",
-  }).sort({ active_jobs_count: 1, totalRamMb: -1 });
+  const targetDeployWorker = await Worker.findBestAvailable("DEPLOYER");
 
-  // 🟢 ĐÃ SỬA: Thêm return để ngắt luồng, tránh lỗi null reference
   if (!targetDeployWorker) {
     const fallbackJob = await Job.findOneAndUpdate(
-      { jobId },
-      { $set: { status: "BUILT", imageTag, logs } },
-      { returnDocument: "after" }, // 🟢 Đã chuẩn hóa
+      { job_id },
+      { $set: { status: "BUILT", image_tag, logs } },
+      { returnDocument: "after" },
     );
     console.warn(
-      `[BuildJobService] Job [${jobId}] đã lưu trạng thái BUILT nhưng chưa có Deploy Worker sẵn sàng.`,
+      `[BuildJobService] Job [${job_id}] đã lưu trạng thái BUILT nhưng chưa có Deploy Worker sẵn sàng.`,
     );
     return {
       success: true,
@@ -122,21 +101,21 @@ const handleBuilderCallback = async (callbackData) => {
   const workerIdentifier = targetDeployWorker.worker_id;
 
   const updatedJob = await Job.findOneAndUpdate(
-    { jobId },
+    { job_id },
     {
       $set: {
         status: "DEPLOY_PENDING",
-        imageTag,
+        image_tag,
         logs,
         assigned_worker_id: workerIdentifier,
         assigned_at: new Date(),
       },
     },
-    { returnDocument: "after" }, // 🟢 Đã chuẩn hóa
+    { returnDocument: "after" },
   );
 
   console.log(
-    `[BuildJobService] Đã gán Job [${jobId}] cho Deploy Worker [${workerIdentifier}] chờ lấy việc.`,
+    `[BuildJobService] Đã gán Job [${job_id}] cho Deploy Worker [${workerIdentifier}] chờ lấy việc.`,
   );
 
   return {
@@ -146,140 +125,8 @@ const handleBuilderCallback = async (callbackData) => {
   };
 };
 
-/**
- * Deploy Worker gọi Polling mỗi 5s để lấy Job dành riêng cho mình
- */
-const getDeployJobForWorker = async (worker_id) => {
-  const job = await Job.findOneAndUpdate(
-    { assigned_worker_id: worker_id, status: "DEPLOY_PENDING" },
-    { $set: { status: "DEPLOYING" } },
-    { sort: { assigned_at: 1 }, returnDocument: "after" },
-  );
-
-  return job;
-};
-
-/**
- * Deploy Worker hoàn tất nhiệm vụ -> Cập nhật trạng thái Job & Đồng bộ vào app Schema
- */
-const completeAndRemoveJob = async (payload) => {
-  const jobId = typeof payload === "string" ? payload : payload.jobId;
-  const {
-    success = true,
-    containerId,
-    port,
-    publicUrl,
-    logs,
-    error,
-  } = payload || {};
-
-  const jobStatus = success ? "COMPLETED" : "DEPLOY_FAILED";
-
-  // 1. Cập nhật trạng thái Job
-  const updatedJob = await Job.findOneAndUpdate(
-    { jobId },
-    {
-      $set: {
-        status: jobStatus,
-        completedAt: new Date(),
-        ...(logs && { logs }),
-        ...(error && { error }),
-      },
-    },
-    { returnDocument: "after" },
-  );
-
-  if (!updatedJob) return null;
-
-  // 2. Đồng bộ thông tin sang Schema App
-  if (success) {
-    await App.findOneAndUpdate(
-      { repoId: updatedJob.repo_id, owner: updatedJob.owner },
-      {
-        $set: {
-          appName: updatedJob.appName,
-          branch: updatedJob.branch,
-          containerId,
-          imageTag: updatedJob.imageTag,
-          hostPort: port || updatedJob.hostPort,
-          containerPort: updatedJob.containerPort || 3000,
-          publicUrl,
-          worker_id: updatedJob.assigned_worker_id,
-          envVars: updatedJob.envVars,
-          status: "RUNNING",
-          lastJobId: jobId,
-        },
-      },
-      { upsert: true, returnDocument: "after" },
-    );
-    console.log(
-      `[🚀 APP SYNC] Đã cập nhật ứng dụng [${updatedJob.appName}] trạng thái RUNNING.`,
-    );
-  } else {
-    await App.findOneAndUpdate(
-      { repoId: updatedJob.repo_id, owner: updatedJob.owner },
-      {
-        $set: {
-          status: "FAILED",
-          lastJobId: jobId,
-        },
-      },
-    );
-  }
-
-  return updatedJob;
-};
-
-/**
- * Watchdog: Tự động đổi Deploy Worker nếu quá hạn nhận Job
- */
-const reassignTimedOutDeployJobs = async (timeoutSeconds = 30) => {
-  const timeoutThreshold = new Date(Date.now() - timeoutSeconds * 1000);
-
-  const timedOutJobs = await Job.find({
-    status: "DEPLOY_PENDING",
-    assigned_at: { $lt: timeoutThreshold },
-  });
-
-  for (const job of timedOutJobs) {
-    console.warn(
-      `[⚠️ TIMEOUT] Deploy Worker [${job.assigned_worker_id}] quá hạn nhận Job [${job.jobId}]`,
-    );
-
-    // Đánh dấu Worker cũ có vấn đề
-    await Workers.findOneAndUpdate(
-      { worker_id: job.assigned_worker_id },
-      { $set: { status: "OFFLINE" } },
-      { returnDocument: "after" }, // 🟢 Đã chuẩn hóa
-    );
-
-    // Tìm Deploy Worker mới thay thế
-    const newWorker = await Workers.findOne({
-      role: { $in: ["DEPLOY", "DEPLOYER"] },
-      status: "READY",
-      worker_id: { $ne: job.assigned_worker_id },
-    }).sort({ active_jobs_count: 1 });
-
-    if (newWorker) {
-      console.log(
-        `[🔄 FAILOVER] Chuyển Job [${job.jobId}] sang Worker mới: [${newWorker.worker_id}]`,
-      );
-      job.assigned_worker_id = newWorker.worker_id;
-      job.assigned_at = new Date();
-      await job.save();
-    } else {
-      console.error(
-        `[❌ FAILOVER FAILED] Không có Deploy Worker nào thay thế cho Job [${job.jobId}]`,
-      );
-    }
-  }
-};
-
 module.exports = {
   createBuildJob,
   getNextJob,
   handleBuilderCallback,
-  getDeployJobForWorker,
-  completeAndRemoveJob,
-  reassignTimedOutDeployJobs,
 };
