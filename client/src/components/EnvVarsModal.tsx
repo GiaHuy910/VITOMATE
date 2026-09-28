@@ -1,28 +1,17 @@
-import { useState, type ChangeEvent } from "react";
+import { type ChangeEvent } from "react";
 
 import { useTheme } from "../contexts/theme/useTheme";
-
-type RowItem = {
-  id: string;
-  key: string;
-  value: string;
-};
-type RowError = {
-  key?: string;
-  value?: string;
-};
+import type { RowItem, RowError } from "../pages/create/CreateStatic";
 
 type Props = {
-  validateEnvVars: () => boolean;
-  getEnvVars: () => Record<string, string>;
+  rows: RowItem[];
+  setRows: React.Dispatch<React.SetStateAction<RowItem[]>>;
+  errors: Record<string, RowError>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, RowError>>>;
 };
-const EnvVarsModal = ({}: Props) => {
+const EnvVarsModal = ({ rows, setRows, errors, setErrors }: Props) => {
   const { theme } = useTheme();
 
-  const [errors, setErrors] = useState<Record<string, RowError>>({});
-  const [rows, setRows] = useState<RowItem[]>([
-    { id: Date.now().toString(), key: "", value: "" },
-  ]);
   const handleInputChange = (
     id: string,
     field: "key" | "value",
@@ -47,39 +36,6 @@ const EnvVarsModal = ({}: Props) => {
       delete newErrors[id];
       return newErrors;
     });
-  };
-  const getEnvVars = (): Record<string, string> | {} => {
-    const envObject: Record<string, string> = {};
-    rows.forEach((row) => {
-      const trimmedKey = row.key.trim();
-      const trimmedValue = row.value.trim();
-      if (trimmedKey && trimmedValue) {
-        envObject[trimmedKey] = trimmedValue;
-      }
-    });
-    return envObject;
-  };
-  const validateEnvVars = (): boolean => {
-    const newErrors: Record<string, RowError> = {};
-    let isValid = true;
-    rows.forEach((row) => {
-      const trimmedKey = row.key.trim();
-      const trimmedValue = row.value.trim();
-      const rowErrors: RowError = {};
-      if (trimmedKey && !trimmedValue) {
-        rowErrors.value = "Required";
-        isValid = false;
-      }
-      if (!trimmedKey && trimmedValue) {
-        rowErrors.key = "Required";
-        isValid = false;
-      }
-      if (Object.keys(rowErrors).length > 0) {
-        newErrors[row.id] = rowErrors;
-      }
-    });
-    setErrors(newErrors);
-    return isValid;
   };
   return (
     <div
