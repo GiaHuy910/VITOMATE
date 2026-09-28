@@ -32,31 +32,99 @@ class SSHService {
   }
 
   async installPublicKey(conn) {
-    const privateKeyPath = config.worker.primaryKeyPath;
-    if (!privateKeyPath) throw new Error("primaryKeyPath chưa được cấu hình");
+    const configuredKeyPath = config.worker.primaryKeyPath;
+
+    if (!configuredKeyPath) {
+      throw new Error("primaryKeyPath chưa được cấu hình");
+    }
+
+    const privateKeyPath = path.resolve(process.cwd(), configuredKeyPath);
 
     const publicKeyPath = `${privateKeyPath}.pub`;
+
+    console.log(`[SSH] Private Key: ${privateKeyPath}`);
+    console.log(`[SSH] Public Key: ${publicKeyPath}`);
+
+    if (!fs.existsSync(privateKeyPath)) {
+      throw new Error(`Không tìm thấy SSH private key: ${privateKeyPath}`);
+    }
+
     if (!fs.existsSync(publicKeyPath)) {
       throw new Error(`Không tìm thấy SSH public key: ${publicKeyPath}`);
     }
 
     const publicKey = fs.readFileSync(publicKeyPath, "utf8").trim();
 
+    if (!publicKey) {
+      throw new Error("SSH public key đang rỗng");
+    }
+
+    console.log("[SSH] Đã đọc SSH Public Key thành công");
+
+    console.log(`[SSH] Public Key: ${publicKey.substring(0, 30)}...`);
+
+    /*
+     * Escape dấu ' để tránh làm hỏng câu lệnh shell
+     */
+    const escapedPublicKey = publicKey.replace(/'/g, "'\\''");
+
     const addKeyCommand = `
-      mkdir -p ~/.ssh && chmod 700 ~/.ssh &&
-      touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys &&
-      grep -qxF '${publicKey}' ~/.ssh/authorized_keys || echo '${publicKey}' >> ~/.ssh/authorized_keys
-    `;
+mkdir -p ~/.ssh &&
+chmod 700 ~/.ssh &&
+touch ~/.ssh/authorized_keys &&
+chmod 600 ~/.ssh/authorized_keys &&
+grep -qxF '${escapedPublicKey}' ~/.ssh/authorized_keys ||
+echo '${escapedPublicKey}' >> ~/.ssh/authorized_keys
+`;
+
+    console.log("[SSH] Đang ghi Public Key vào ~/.ssh/authorized_keys...");
 
     return new Promise((resolve, reject) => {
       conn.exec(addKeyCommand, (err, stream) => {
-        if (err) return reject(err);
+        if (err) {
+          console.error("[SSH] Lỗi conn.exec() khi cài Public Key:", err);
+
+          return reject(err);
+        }
+
+        let stdout = "";
+        let stderr = "";
+
+        stream.on("data", (data) => {
+          const message = data.toString();
+
+          stdout += message;
+
+          console.log(`[SSH PUBLIC KEY STDOUT]: ${message}`);
+        });
+
+        stream.stderr.on("data", (data) => {
+          const message = data.toString();
+
+          stderr += message;
+
+          console.error(`[SSH PUBLIC KEY STDERR]: ${message}`);
+        });
+
+        stream.on("error", (err) => {
+          console.error("[SSH] Stream error khi cài Public Key:", err);
+
+          reject(err);
+        });
+
         stream.on("close", (code) => {
+          console.log(`[SSH] installPublicKey kết thúc với exit code: ${code}`);
+
           if (code === 0) {
             console.log("[SSH] Đã cài SSH public key vào Worker thành công");
+
             resolve();
           } else {
-            reject(new Error("Lỗi khi ghi authorized_keys"));
+            reject(
+              new Error(
+                `Lỗi khi ghi authorized_keys. Exit code: ${code}\n${stderr}`,
+              ),
+            );
           }
         });
       });
@@ -124,7 +192,7 @@ class SSHService {
     const {
       masterUrl,
       registryUrl,
-      workerId,
+      worker_id,
       agentToken,
       host,
       username,
@@ -134,7 +202,7 @@ class SSHService {
     if (
       !masterUrl ||
       !registryUrl ||
-      !workerId ||
+      !worker_id ||
       !host ||
       !username ||
       !agentToken
@@ -142,7 +210,7 @@ class SSHService {
       throw new Error("Thiếu cấu hình tham số bắt buộc để Bootstrap");
     }
 
-    const role = (vmConfig.role || "BUILDER").toUpperCase();
+    const role = vmConfig.role.toUpperCase();
     const agentFolderNameMap = {
       BUILDER: "agentBuilder",
       DEPLOYER: "agentDeployer",
@@ -185,10 +253,11 @@ class SSHService {
       await this.uploadDir(sftp, sourceAgentDir, "/tmp/agent");
 
       const command = `
-        sudo -S env \
+        sudo -S -p "" env \
         MASTER_URL="${masterUrl}" \
         REGISTRY_URL="${registryUrl}" \
-        WORKER_ID="${workerId}" \
+        WORKER_ID="${worker_id}" \
+        WORKER_HOST="${host}" \
         AGENT_ROLE="${role}" \
         AGENT_TOKEN="${agentToken}" \
         IS_UPDATE="${!isFirstTime}" \
@@ -203,7 +272,7 @@ class SSHService {
           if (err) return reject(err);
 
           // Nhập password cho sudo nếu chạy lần đầu bằng password
-          if (isFirstTime && password) {
+          if (password) {
             stream.write(`${password}\n`);
           }
 
@@ -219,7 +288,7 @@ class SSHService {
       });
 
       console.log(
-        `[SSH] Worker [${workerId}] ${isFirstTime ? "Bootstrap" : "Update"} thành công!`,
+        `[SSH] Worker [${worker_id}] ${isFirstTime ? "Bootstrap" : "Update"} thành công!`,
       );
       conn.end();
       return true;

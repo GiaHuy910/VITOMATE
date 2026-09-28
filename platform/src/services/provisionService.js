@@ -1,9 +1,12 @@
 const path = require("path");
+const crypto = require("crypto");
+
 const config = require("../config/config");
 const sshService = require("../provisioning/sshService");
-const Worker = require("../models/Workers");
 const workerCounter = require("../models/WorkerCounter");
 const tokenService = require("./tokenService");
+
+const Worker = require("../models/Worker");
 
 // Hàm hash SHA-256
 const hashToken = (token) => {
@@ -24,60 +27,72 @@ const bootstrapWorker = async (workerData) => {
 
   const agentFolder_map = {
     BUILDER: "agentBuilder",
-    DEPLOYER: "agentDeploy",
+    DEPLOYER: "agentDeployer",
   };
 
   const agentFolder = agentFolder_map[role.toUpperCase()];
   const resourcesDir = path.join(baseAgentDir, agentFolder);
 
   // 3. Xử lý Worker ID chuẩn xác
-  let workerId;
-  let rawAgentToken;
-  let hashedToken;
+  let worker_id;
+  let raw_agent_token;
+  let hashed_token;
   const existingWorker = await Worker.findOne({ host })
-    .select("workerId")
+    .select("worker_id")
     .lean();
 
-  if (existingWorker && existingWorker.workerId) {
+  if (existingWorker && existingWorker.worker_id) {
     // Nếu tìm thấy -> Lấy trường workerId ra
-    workerId = existingWorker.workerId;
-    hashedToken = existingWorker.agentTokenHash;
+    worker_id = existingWorker.worker_id;
   } else {
-    // Nếu chưa có -> Tăng counter và gán trực tiếp cho workerId
+    // Nếu chưa có -> Tăng counter và gán trực tiếp cho worker_id
     const counter = await workerCounter.findOneAndUpdate(
-      { _id: "workerId" },
+      { _id: "worker_id" },
       { $inc: { sequence: 1 } },
-      { new: true, upsert: true },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      },
     );
-    workerId = counter.sequence;
-    rawAgentToken = tokenService.generateToken();
-    hashedToken = hashToken(rawAgentToken);
+    worker_id = counter.sequence;
   }
+  raw_agent_token = tokenService.generateToken();
+  hashed_token = hashToken(raw_agent_token);
 
   // 5. Lưu (hoặc cập nhật) thông tin Worker vào MongoDB (Lưu HASH TOKEN, không lưu rawToken)
-  await Worker.findOneAndUpdate(
-    { workerId },
+  const worker = await Worker.findOneAndUpdate(
+    { worker_id },
     {
-      workerId,
-      host,
-      port: Number(port) || 22,
-      role,
-      agentTokenHash: hashedToken,
-      status: "BOOTSTRAPPING",
+      $set: {
+        host,
+        port: Number(port) || 22,
+        role,
+        agent_token_hash: hashed_token,
+        status: "BOOTSTRAPPING",
+      },
+      $setOnInsert: {
+        worker_id,
+      },
     },
-    { upsert: true, new: true },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    },
   );
 
   const targetworker = {
-    workerId: workerId,
+    worker_id: worker_id,
     host,
-    port: Number(port) || Number(process.env.PORT_WORKER) || 22,
+    port: Number(port) || 22,
     username,
     password,
     role: role,
     masterUrl,
     registryUrl,
-    agentToken: rawAgentToken,
+    agentToken: raw_agent_token,
     files: {
       // Trỏ đúng vào các file nằm trong agentBuilder / agentDeploy
       agent: path.join(resourcesDir, "src", "index.js"),

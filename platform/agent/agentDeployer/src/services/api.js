@@ -4,23 +4,25 @@ const config = require("../config/config");
  * Poll tìm Job Deploy mới từ Master
  */
 async function pollMaster() {
-  const url = `${config.MASTER_URL}/api/deployers/poll?worker_id=${config.WORKER_ID}`;
+  const url = `http://${config.MASTER_URL}/api/deployers/poll?worker_id=${config.WORKER_ID}`;
 
   try {
     const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        authorization: `Bearer ${process.env.AGENT_TOKEN}`,
+        authorization: `Bearer ${config.AGENT_TOKEN}`,
       },
     });
 
     // 204 = Không có việc
     if (res.status === 204) {
+      console.log("Khong co viec.");
       return null;
     }
 
     if (res.status === 200) {
+      console.log("Co job");
       const data = await res.json();
       return data;
     }
@@ -35,32 +37,25 @@ async function pollMaster() {
 /**
  * Gửi báo cáo kết quả Deploy (Thành công / Thất bại) về Master
  */
-async function reportJobResultToMaster(jobId, result) {
-  const url = `${config.MASTER_URL}/api/deployers/callback`;
-
-  const payload = {
-    jobId: safeJobId,
-    workerId: config.WORKER_ID,
-    ...result,
-  };
-
-  const masterUrl = config.MASTER_URL;
+async function reportJobResultToMaster(result) {
+  console.log("result2: ", result);
+  const url = `http://${config.MASTER_URL}/api/deployers/callback`;
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        authorization: `Bearer ${process.env.AGENT_TOKEN}`,
+        authorization: `Bearer ${config.AGENT_TOKEN}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(result),
     });
 
     const responseData = await response.text();
 
     if (response.ok) {
       console.log(
-        `[📤 REPORT] Đã gửi báo cáo Deploy Job [${safeJobId}] về Master thành công.`,
+        `[📤 REPORT] Đã gửi báo cáo Deploy Job [${result.job_id}] về Master thành công.`,
       );
 
       return responseData;
@@ -70,12 +65,20 @@ async function reportJobResultToMaster(jobId, result) {
       `[❌ REPORT FAILED] Master trả về mã lỗi HTTP: ${response.status}`,
     );
 
+    console.error(`[❌ REPORT FAILED] Response: ${responseData}`);
+
+    console.error(
+      `[❌ REPORT FAILED] Payload: ${JSON.stringify(result, null, 2)}`,
+    );
+
     throw new Error(`Master HTTP Error: ${response.status}`);
+    return;
   } catch (err) {
     console.error(
       `[❌ REPORT FAILED] Không thể gửi báo cáo Deploy về Master:`,
       err.message,
     );
+    return;
 
     throw err;
   }

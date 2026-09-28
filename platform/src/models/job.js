@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
 
-const jobSchema = new mongoose.Schema(
+const JobSchema = new mongoose.Schema(
   {
-    job_id: { type: String, required: true, unique: true, index: true },
-    repo_id: { type: String, required: true },
+    job_id: { type: Number, required: true, unique: true, index: true },
+    app_id: { type: Number, require: true },
+    deployment_order: { type: Number, require: true },
     owner: { type: String, required: true },
     app_name: { type: String, required: true },
     branch: { type: String, default: "main" },
@@ -28,18 +29,17 @@ const jobSchema = new mongoose.Schema(
     },
 
     // Phân công Deploy Worker (Phục vụ luồng Pulling/Polling)
-    assigned_worker_id: { type: String, default: null, index: true },
+    assigned_worker_id: { type: String, default: null },
     assigned_at: { type: Date, default: null },
 
     // Log hệ thống
     logs: { type: String, default: "" },
 
     // Thông tin Cấu hình Container khi Deploy
-    container_port: { type: Number, default: 3000 },
-    host_port: { type: Number, default: 8080 },
+    container_port: { type: Number, default: null },
     env_vars: { type: Map, of: String, default: {} },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Job", jobSchema);
+module.exports = mongoose.model("Job", JobSchema);

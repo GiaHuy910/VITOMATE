@@ -6,7 +6,7 @@ dotenv.config();
 
 const config = require("./config/config");
 const route = require("./routes");
-const { reassignTimedOutDeployJobs } = require("./services/buildJobService");
+const { reassignTimedOutDeployJobs } = require("./services/deployJobService");
 const db = require("./config/db/mongodb");
 
 const app = express();

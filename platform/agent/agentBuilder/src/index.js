@@ -1,6 +1,6 @@
 const config = require("./config/config");
-const { pollMaster, reportJobResultToMaster } = require("./services/api");
-const { handleJob } = require("./executor");
+const api = require("./services/api");
+const executor = require("./executor");
 
 console.log(`[🚀 AGENT BUILD] Khởi chạy Build Agent [${config.AGENT_ID}]...`);
 console.log(`[🔗 AGENT BUILD] Kết nối tới Master: ${config.MASTER_URL}`);
@@ -8,16 +8,16 @@ console.log(`[🔗 AGENT BUILD] Kết nối tới Master: ${config.MASTER_URL}`)
 async function runAgent() {
   while (true) {
     try {
-      const job = await pollMaster();
+      const job = await api.pollMaster();
 
       if (job) {
         console.log(`[📥 LỆNH MỚI TỪ MASTER]:`, job);
 
         // Agent bận ở đây
-        const result = await handleJob(job);
+        const result = await executor.handleJob(job);
 
         // Chỉ sau khi hoàn thành Job mới report
-        await reportJobResultToMaster(result);
+        const report = await api.reportJobResultToMaster(result);
 
         console.log(
           `[✅ JOB ${job.job_id}] Hoàn thành. Agent sẵn sàng nhận Job tiếp theo.`,
