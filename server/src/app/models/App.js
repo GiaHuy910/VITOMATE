@@ -7,8 +7,14 @@ const AppSchema = new Schema(
     repo_id: { type: Number, required: true },
     deployments: [
       {
-        deployment_order: { type: Number },
+        deployment_order: { type: Number, default: 1 },
         deploy_at: { type: Date, default: Date.now },
+        env_vars: {
+          type: Map,
+          of: String,
+          default: {},
+        },
+        _id: false,
       },
     ],
   },

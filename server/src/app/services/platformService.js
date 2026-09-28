@@ -5,8 +5,9 @@ const deployToPlatform = async (
   owner,
   name,
   branch,
+  env_vars,
 ) => {
-  const body = { app_id, deployment_order, owner, name, branch };
+  const body = { app_id, deployment_order, owner, name, branch, env_vars };
   const response = await fetch("http://vitomate.com:4001/api/builders/init", {
     method: "POST",
     headers: {
