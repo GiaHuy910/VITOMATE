@@ -1,5 +1,7 @@
 import { config } from "../config/config";
 
+import type { deployForm } from "../types/repository";
+
 const baseApi = `${config.api.server_api_dev}`;
 
 export const checkGithubRepo = async (repoUrl: string) => {
@@ -16,13 +18,6 @@ export const checkGithubRepo = async (repoUrl: string) => {
     throw new Error(data.message || "Invalid repository");
   }
   return data;
-};
-//nhớ sửa lại sau
-type deployForm = {
-  repositoryId: Number;
-  name: string;
-  owner: string;
-  defaultBranch: string;
 };
 
 export const deployRepository = async (body: deployForm) => {
@@ -47,7 +42,7 @@ export const deployRepository = async (body: deployForm) => {
     owner: data.repository.owner,
     name: data.repository.name,
     branch: data.repository.branch,
-    //thieu env
+    envVars: data.repository.env_vars,
   };
   await fetch(`${baseApi}/app/deploy`, {
     method: "POST",

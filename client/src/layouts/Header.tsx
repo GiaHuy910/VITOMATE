@@ -29,6 +29,7 @@ const Header = () => {
   const handleWorkSpace = () => {
     navigate("/workspace");
   };
+  // sua isdark
   //ghi là display_name nhưng thực chất là display_name sau này nhớ
   return (
     <nav className="navbar navbar-expand-lg bg-body fixed-top border">
@@ -56,9 +57,7 @@ const Header = () => {
           aria-controls="navbarSupportedContent"
           aria-expanded="false"
           aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+        ></button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
@@ -96,7 +95,7 @@ const Header = () => {
         {user && (
           <div className="dropdown ms-2">
             <button
-              className="btn btn-secondary d-flex align-items-center justify-content-end"
+              className={`btn ${theme === "Dark" ? "btn-dark border-light" : "btn-light border-dark"} rounded-0`}
               type="button"
               id="dropdownMenuButton1"
               data-bs-toggle="dropdown"
@@ -104,14 +103,9 @@ const Header = () => {
             >
               <img
                 src={user?.avatar.url || placeholderImage}
-                alt=""
+                alt={user?.display_name}
                 className="user-avatar-small"
               />
-              {user.display_name}
-              <div
-                className="ps-1 dropdown-toggle"
-                style={{ color: "white" }}
-              ></div>
             </button>
 
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">

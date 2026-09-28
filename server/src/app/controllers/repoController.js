@@ -27,7 +27,7 @@ class RepoController {
   //[POST] /repo/store
   async store(req, res) {
     try {
-      const { repositoryId, name, owner, defaultBranch } = req.body;
+      const { githubRepoId, name, owner, defaultBranch, envVars } = req.body;
       const user_id = req.user.user_id;
       const user = await User.findOne({ user_id });
       if (!user) {
@@ -38,7 +38,7 @@ class RepoController {
       const repo = await Repo.create({
         user_id: user.user_id,
         repo_id,
-        github_repo_id: repositoryId,
+        github_repo_id: githubRepoId,
         owner_name: owner,
         repo_name: name,
         branch_default: defaultBranch,
@@ -51,6 +51,7 @@ class RepoController {
           owner: repo.owner_name,
           repo_id: repo_id,
           branch: repo.branch_default,
+          env_vars: envVars,
         },
       });
     } catch (error) {
