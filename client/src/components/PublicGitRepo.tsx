@@ -78,7 +78,7 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
         <button
           type="button"
           disabled={!!error || !repoUrl.trim() || loading}
-          className="btn btn-secondary"
+          className="btn btn-secondary rounded-0"
           hidden={!onRepositoryConnected}
           onClick={handleConnect}
         >
