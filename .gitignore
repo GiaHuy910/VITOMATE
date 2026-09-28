@@ -1,5 +1,6 @@
 server/node_modules/
 platform/node_modules/
+platform/src/keys/
 
 client/node_modules/
 client/src/public/css/
