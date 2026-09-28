@@ -1,16 +1,30 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import GitProvider from "../../components/GitProvider";
 import PublicGitRepo from "../../components/PublicGitRepo";
 import type { GithubRepository } from "../../types/repository";
 import { deployRepository } from "../../api/repo";
-import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../contexts/theme/useTheme";
+import EnvVarsModal from "../../components/EnvVarsModal";
 
 type RepositoryForm = {
   name: string;
   defaultBranch: string;
 };
+
+export type RowItem = {
+  id: string;
+  key: string;
+  value: string;
+};
+export type RowError = {
+  key?: string;
+  value?: string;
+};
+
 const CreateStatic = () => {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   type SourceType = "gitprovider" | "publicgitrepo";
   const [selected, setSelected] = useState<SourceType>("gitprovider");
@@ -20,6 +34,43 @@ const CreateStatic = () => {
     name: "",
     defaultBranch: "",
   });
+
+  const [errors, setErrors] = useState<Record<string, RowError>>({});
+  const [rows, setRows] = useState<RowItem[]>([
+    { id: Date.now().toString(), key: "", value: "" },
+  ]);
+
+  const getEnvVars = () => {
+    const envObject: Record<string, string> = {};
+    rows.forEach((row) => {
+      if (row.key.trim() && row.value.trim()) {
+        envObject[row.key.trim()] = row.value.trim();
+      }
+    });
+    return envObject;
+  };
+  const validateEnvVars = (): boolean => {
+    const newErrors: Record<string, RowError> = {};
+    let isValid = true;
+    rows.forEach((row) => {
+      const trimmedKey = row.key.trim();
+      const trimmedValue = row.value.trim();
+      const rowErrors: RowError = {};
+      if (trimmedKey && !trimmedValue) {
+        rowErrors.value = "Required";
+        isValid = false;
+      }
+      if (!trimmedKey && trimmedValue) {
+        rowErrors.key = "Required";
+        isValid = false;
+      }
+      if (Object.keys(rowErrors).length > 0) {
+        newErrors[row.id] = rowErrors;
+      }
+    });
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleSetRepository = (repository: GithubRepository) => {
     setRepository(repository);
@@ -46,11 +97,17 @@ const CreateStatic = () => {
     if (!repository) {
       return;
     }
+    const isValid = validateEnvVars();
+    if (!isValid) {
+      return;
+    }
+    const envVars = getEnvVars();
     const body = {
-      repositoryId: repository.id,
+      githubRepoId: repository.id,
       name: form.name,
       owner: repository.owner,
       defaultBranch: form.defaultBranch,
+      envVars: envVars,
     };
     await deployRepository(body);
     navigate("/dashboard");
@@ -129,10 +186,15 @@ const CreateStatic = () => {
               />
             </div>
           </div>
-          <div className="row my-4 "></div>
-          <div className=" my-5 ">
+          <EnvVarsModal
+            rows={rows}
+            setRows={setRows}
+            errors={errors}
+            setErrors={setErrors}
+          />
+          <div className="my-5">
             <button
-              className="btn btn-secondary btn-lg rounded-0"
+              className={`btn ${theme === "Dark" ? "btn-light" : "btn-dark"} btn-lg rounded-0`}
               onClick={handleDeploy}
             >
               Deploy

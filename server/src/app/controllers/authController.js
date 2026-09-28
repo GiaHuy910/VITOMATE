@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const { getNextUserId } = require("../../utils/getNextUserId");
 const { getGithubUserInfo } = require("../services/githubService");
-const { createJwt, verifyJwt } = require("../../utils/jwt");
+const { createJwt } = require("../../utils/jwt");
 const { createCbc } = require("../../utils/cbc");
 const config = require("../../config/config");
 const githubUrl = config.github.url;
@@ -26,13 +26,11 @@ class AuthController {
         });
       }
 
-      // Hash password
       const passwordHash = await bcrypt.hash(password, 12);
       const user_id = await getNextUserId();
 
-      //tao user
       const user = await User.create({
-        displayname,
+        display_name,
         user_id,
         username,
         email,
