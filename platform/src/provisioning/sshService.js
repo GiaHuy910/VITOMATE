@@ -22,10 +22,29 @@ class SSHService {
         await this.uploadDir(sftp, localPath, remotePath);
       } else {
         await new Promise((resolve, reject) => {
-          sftp.fastPut(localPath, remotePath, (err) => {
-            if (err) return reject(err);
-            resolve();
-          });
+          // Shell script được tạo trên Windows có thể dùng CRLF.
+          // Linux cần LF.
+          if (path.extname(localPath).toLowerCase() === ".sh") {
+            try {
+              const content = fs
+                .readFileSync(localPath, "utf8")
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n");
+
+              sftp.writeFile(remotePath, content, (err) => {
+                if (err) return reject(err);
+                resolve();
+              });
+            } catch (err) {
+              reject(err);
+            }
+          } else {
+            // File bình thường: giữ nguyên byte
+            sftp.fastPut(localPath, remotePath, (err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
         });
       }
     }
