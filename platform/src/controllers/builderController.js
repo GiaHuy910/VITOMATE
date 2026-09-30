@@ -72,50 +72,6 @@ const initProject = async (req, res) => {
   }
 };
 
-const rollback = async (req, res) => {
-  try {
-    const { app_id, deployment_order, deployment_rollback, is_rollback } =
-      req.body;
-    if (!app_id || !deployment_order || !deployment_rollback || !is_rollback) {
-      return res.status(400).json({
-        success: false,
-        error: "Thieu thong tin.",
-      });
-    }
-
-    const app = App.findOne({
-      app_id: app_id,
-      deployment: { deployment_order: deployment_rollback },
-    });
-
-    const newJobPayload = await buildJobService.createBuildJob({
-      app_id: app_id,
-      deployment_order: deployment_order,
-      owner: app.owner,
-      name: app.name,
-      branch: app.branch || "main",
-      env_vars: app.env_vars || {},
-    });
-
-    console.log(
-      `[Platform] Đã tiếp nhận Project [${app_id}], đẩy Job ${newJobPayload.job_id} vào Queue.`,
-    );
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Khởi tạo Project thành công, tác vụ Build đã được đưa vào hàng đợi.",
-      job_id: newJobPayload.job_id,
-    });
-  } catch (error) {
-    console.error("[ROLLBACK PROJECT ERROR]:");
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};
-
 /**
  * Callback nhận báo cáo kết quả Build từ Builder Worker
  * POST /api/builders/callback

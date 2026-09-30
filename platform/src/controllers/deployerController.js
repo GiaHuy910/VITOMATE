@@ -1,4 +1,3 @@
-const buildJobService = require("../services/buildJobService");
 const deployJobService = require("../services/deployJobService");
 
 /**
@@ -27,6 +26,55 @@ const pollJob = async (req, res) => {
   } catch (error) {
     console.error("[❌ DEPLOY POLL ERROR]:", error.message);
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const rollback = async (req, res) => {
+  try {
+    const { app_id, deployment_rollback, owner, name } = req.body;
+    if (!app_id || !deployment_rollback || !owner || !name) {
+      return res.status(400).json({
+        success: false,
+        error: "Thieu thong tin.",
+      });
+    }
+
+    const app = App.findOne({
+      app_id: app_id,
+      deployment: { deployment_order: deployment_rollback },
+    });
+
+    const { worker_id, container_port, deployments } = app;
+
+    const { branch, image_tag, env_vars } = deployments;
+
+    const job = {
+      app_id: app_id,
+      deployment_order: deployment_rollback,
+      owner: owner,
+      name: name,
+      branch: branch,
+      image_tag: image_tag,
+      worker_id: worker_id,
+      container_port: container_port,
+      env_vars: env_vars,
+    };
+
+    const result = await deployJobService.handleDeployerRollback(job);
+
+    console.log("Tạo job rollback thành công.");
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Khởi tạo Project thành công, tác vụ Build đã được đưa vào hàng đợi.",
+    });
+  } catch (error) {
+    console.error("[ROLLBACK PROJECT ERROR]:");
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -92,5 +140,6 @@ const callback = async (req, res) => {
 
 module.exports = {
   pollJob,
+  rollback,
   callback,
 };
