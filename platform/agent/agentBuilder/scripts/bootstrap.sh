@@ -13,6 +13,40 @@ AGENT_TOKEN="${AGENT_TOKEN:?AGENT_TOKEN is required}"
 # Đọc cờ IS_UPDATE (mặc định là false nếu không truyền)
 IS_UPDATE="${IS_UPDATE:-false}"
 
+wait_for_apt() {
+    echo "===> Kiểm tra APT/DPKG lock..."
+
+    local max_wait=300
+    local waited=0
+
+    while \
+        fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 ||
+        fuser /var/lib/dpkg/lock >/dev/null 2>&1 ||
+        fuser /var/lib/apt/lists/lock >/dev/null 2>&1 ||
+        fuser /var/cache/apt/archives/lock >/dev/null 2>&1
+    do
+        if [ "$waited" -ge "$max_wait" ]; then
+            echo "[ERROR] APT/DPKG vẫn đang bị khóa sau ${max_wait} giây."
+            echo "===> Các process đang sử dụng APT/DPKG:"
+
+            fuser -v \
+                /var/lib/dpkg/lock-frontend \
+                /var/lib/dpkg/lock \
+                /var/lib/apt/lists/lock \
+                /var/cache/apt/archives/lock \
+                2>/dev/null || true
+
+            return 1
+        fi
+
+        echo "===> APT/DPKG đang bận. Đợi 5 giây..."
+        sleep 5
+        waited=$((waited + 5))
+    done
+
+    echo "===> APT/DPKG đã sẵn sàng."
+}
+
 if [ "$IS_UPDATE" = "true" ]; then
     echo "=========================================================="
     echo "===> [UPDATE MODE] Phát hiện cờ IS_UPDATE=true"
@@ -23,27 +57,25 @@ else
     echo "===> [FIRST BOOTSTRAP MODE] Tiến hành cài đặt hệ thống..."
     echo "=========================================================="
 
-    echo "===> [0/5] Vô hiệu hóa và tiêu diệt tiến trình apt/dpkg ngầm..."
+    echo "===> [0/5] Chờ APT/DPKG sẵn sàng..."
+
     export DEBIAN_FRONTEND=noninteractive
 
-    systemctl mask unattended-upgrades.service 2>/dev/null || true
-    systemctl stop unattended-upgrades.service 2>/dev/null || true
+    wait_for_apt
 
-    killall -9 apt apt-get dpkg unattended-upgrade unattended-upgr 2>/dev/null || true
+    dpkg --configure -a
 
-    rm -f \
-      /var/lib/dpkg/lock-frontend \
-      /var/lib/dpkg/lock \
-      /var/lib/apt/lists/lock \
-      /var/cache/apt/archives/lock
-
-    dpkg --configure -a 2>/dev/null || true
+    wait_for_apt
 
     echo "===> [1/5] Cập nhật hệ thống và cài đặt gói phụ thuộc..."
     export NEEDRESTART_MODE=a
     export NEEDRESTART_SUSPEND=1
 
+    wait_for_apt
+
     apt-get update -y
+
+    wait_for_apt
 
     apt-get install -y \
       -o Dpkg::Options::="--force-confdef" \
@@ -64,7 +96,11 @@ if ! command -v docker >/dev/null 2>&1; then
 
     export DEBIAN_FRONTEND=noninteractive
 
+    wait_for_apt
+
     apt-get update -y
+
+    wait_for_apt
 
     apt-get install -y \
       -o Dpkg::Options::="--force-confdef" \
@@ -91,7 +127,11 @@ if ! command -v node >/dev/null 2>&1; then
 
     export DEBIAN_FRONTEND=noninteractive
 
+    wait_for_apt
+
     apt-get update -y
+
+    wait_for_apt
 
     apt-get install -y \
       -o Dpkg::Options::="--force-confdef" \
