@@ -10,20 +10,21 @@ async function handleJob(job) {
     app_id,
     deployment_order,
     image_tag,
+    container_port,
     registryAuth,
     env_vars,
   } = job;
-
-  console.log("job: ", job);
 
   if (!image_tag) {
     console.log("thieu image_tag.");
     return;
   }
 
-  await pullImage.pullImage(image_tag, registryAuth);
+  if (!container_port) {
+    container_port = config.CONTAINER_PORT;
+  }
 
-  container_port = config.CONTAINER_PORT;
+  await pullImage.pullImage(image_tag, registryAuth);
 
   const res = await deployHandler.deployApp({
     job_id,

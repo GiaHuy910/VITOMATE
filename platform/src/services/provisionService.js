@@ -51,7 +51,7 @@ const bootstrapWorker = async (workerData) => {
       { $inc: { sequence: 1 } },
       {
         upsert: true,
-        new: true,
+        returnDocument: "after",
         setDefaultsOnInsert: true,
       },
     );
@@ -77,7 +77,7 @@ const bootstrapWorker = async (workerData) => {
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: "after",
       runValidators: true,
       setDefaultsOnInsert: true,
     },

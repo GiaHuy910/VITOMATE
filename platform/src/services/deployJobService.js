@@ -1,6 +1,7 @@
 const Job = require("../models/Job");
 const Worker = require("../models/Worker");
 const App = require("../models/App");
+const getNextJobId = require("../utils/getNextJobId");
 
 /**
  * Xử lý Callback kết quả từ deployer Worker
@@ -99,6 +100,43 @@ const handleDeployerCallback = async (payload) => {
   };
 };
 
+const handleDeployerRollback = async (job) => {
+  const {
+    app_id,
+    deployment_order,
+    owner,
+    name,
+    branch,
+    image_tag,
+    worker_id,
+    container_port,
+    env_vars,
+  } = job;
+
+  const job_id = await getNextJobId.getNextJobId();
+
+  const newJob = await Job.create({
+    job_id: job_id,
+    app_id: app_id,
+    deployment_order: deployment_order,
+    owner,
+    app_name: name,
+    branch: branch || "main",
+    env_vars: env_vars || {},
+    image_tag: image_tag,
+    status: "PENDING",
+    assigned_worker_id: worker_id,
+    container_port: container_port,
+  });
+
+  console.log(`[Platform Queue] Đã thêm Job mới vào DB: ${newJob.job_id}`);
+
+  return {
+    job_id: newJob.job_id,
+    type: "BUILD_AND_PACK",
+  };
+};
+
 /**
  * Deploy Worker gọi Polling mỗi 5s để lấy Job dành riêng cho mình
  */
@@ -159,6 +197,7 @@ const reassignTimedOutDeployJobs = async (timeoutSeconds = 30) => {
 
 module.exports = {
   handleDeployerCallback,
+  handleDeployerRollback,
   getDeployJobForWorker,
   reassignTimedOutDeployJobs,
 };
