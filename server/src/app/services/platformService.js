@@ -12,6 +12,7 @@ const deployToPlatform = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.SERVER_TOKEN}`,
     },
     credentials: "include",
     body: JSON.stringify(body),
