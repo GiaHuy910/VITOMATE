@@ -19,7 +19,7 @@ class AppController {
         if (owner != repo.owner_name || name != repo.repo_name) {
           return res.status(401).json({ message: "Illegal injection" });
         }
-        const app = await App.findOne({ repoId });
+        const app = await App.findOne({ repo_id: repoId });
         //In N deploy
         if (app) {
           const app_id = app.app_id;
@@ -53,7 +53,7 @@ class AppController {
             repo_id: repoId,
             deployments: [{}],
           });
-          const deployment_order = appCreated.deployments.deployment_order;
+          const deployment_order = appCreated.deployments[0]?.deployment_order;
           const deploy_data = await deployToPlatform(
             app_id,
             deployment_order,
