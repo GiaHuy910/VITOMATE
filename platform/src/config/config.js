@@ -5,7 +5,10 @@ const config = {
     url: process.env.MASTER_URL,
   },
 
-  server_1_url_dev: process.env.SERVER_1_URL_DEV,
+  server: {
+    server_url_dev: process.env.SERVER_URL_DEV,
+    server_url_prod: process.env.SERVER_URL_PROD,
+  },
 
   worker: {
     primaryKeyPath: process.env.WORKER_PRIMARY_KEY_PATH,
