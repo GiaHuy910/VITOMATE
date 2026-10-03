@@ -38,7 +38,6 @@ async function pollMaster() {
  * Gửi báo cáo kết quả Deploy (Thành công / Thất bại) về Master
  */
 async function reportJobResultToMaster(result) {
-  console.log("result2: ", result);
   const url = `http://${config.MASTER_URL}/api/deployers/callback`;
 
   try {

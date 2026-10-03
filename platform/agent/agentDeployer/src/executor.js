@@ -10,7 +10,7 @@ async function handleJob(job) {
     app_id,
     deployment_order,
     image_tag,
-    container_port,
+    //container_port,
     registryAuth,
     env_vars,
   } = job;
@@ -20,9 +20,7 @@ async function handleJob(job) {
     return;
   }
 
-  if (!container_port) {
-    container_port = config.CONTAINER_PORT;
-  }
+  const container_port = config.CONTAINER_PORT;
 
   await pullImage.pullImage(image_tag, registryAuth);
 
