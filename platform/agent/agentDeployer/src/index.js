@@ -16,8 +16,6 @@ async function runAgent() {
         // Agent bận ở đây
         const result = await executor.handleJob(job);
 
-        console.log("result: ", result);
-
         // Chỉ sau khi hoàn thành Job mới report
         await api.reportJobResultToMaster(result);
 
