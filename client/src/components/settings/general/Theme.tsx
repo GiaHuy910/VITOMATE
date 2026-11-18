@@ -1,5 +1,6 @@
 import { useTheme } from "../../../contexts/theme/useTheme";
 import { updateTheme } from "../../../api/users";
+import { ApiError } from "../../../api/api";
 
 const themes = [
   {
@@ -23,11 +24,28 @@ const Theme = () => {
   const handleChangeTheme = async (value: ThemeType) => {
     const previousTheme = theme;
     try {
-      setTheme(value);
       await updateTheme(value);
+      setTheme(value);
     } catch (error) {
       setTheme(previousTheme);
-      console.error("Failed to update theme:", error);
+      if (error instanceof ApiError) {
+        switch (error.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+            break;
+        }
+      }
     }
   };
   const currentTheme = themes.find((themeItem) => themeItem.value === theme);

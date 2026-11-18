@@ -14,6 +14,5 @@ router.patch(
 );
 router.patch("/me/theme", authenticate, usersController.updateUserTheme);
 router.patch("/me", authenticate, usersController.updateUser);
-router.get("/me", authenticate, usersController.me);
 
 module.exports = router;

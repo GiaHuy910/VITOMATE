@@ -1,82 +1,34 @@
 import { type ThemeType } from "../contexts/theme/ThemeContext";
-import { config } from "../config/config";
+import { apiFetch } from "./api";
 
-const baseApi = `${config.api.server_api_dev}/users`;
-
-export const getCurrentUser = async () => {
-  const response = await fetch(`${baseApi}/me`, {
-    credentials: "include",
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to get user");
-  }
-
-  return data;
-};
+const baseApi = `/users`;
 
 export const updateUser = async (field: string, value: string) => {
-  const response = await fetch(`${baseApi}/me`, {
+  return apiFetch(`${baseApi}/me`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify({
-      [field]: value,
-    }),
+    body: JSON.stringify({ [field]: value }),
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Update failed");
-  }
-
-  return data;
 };
 
 export const uploadAvatar = async (file: File) => {
   const formData = new FormData();
   formData.append("avatar", file);
 
-  const response = await fetch(`${baseApi}/me/avatar`, {
+  return apiFetch(`${baseApi}/me/avatar`, {
     method: "PATCH",
-    credentials: "include",
     body: formData,
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Upload avatar failed");
-  }
-
-  return data;
 };
 
 export const deleteAvatar = async () => {
-  const response = await fetch(`${baseApi}/me/avatar`, {
+  return apiFetch(`${baseApi}/me/avatar`, {
     method: "DELETE",
-    credentials: "include",
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Delete avatar failed");
-  }
-
-  return data;
 };
 
 export const updateTheme = async (theme: ThemeType) => {
-  const response = await fetch(`${baseApi}/me/theme`, {
+  return apiFetch(`${baseApi}/me/theme`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
     body: JSON.stringify({ theme }),
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Upload avatar failed");
-  }
-
-  return data;
 };

@@ -22,7 +22,7 @@ const DashBoard = () => {
         >
           + New{" "}
         </button>
-        <ul className="dropdown-menu show">
+        <ul className="dropdown-menu">
           <li>
             <button
               type="button"

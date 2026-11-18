@@ -5,12 +5,9 @@ import { userUtilityPage } from "./index";
 import { useAuth } from "../../contexts/auth/useAuth";
 import ProfileField from "../../components/ProfileFieldProps";
 import AvatarField from "../../components/AvatarField";
-import {
-  getCurrentUser,
-  uploadAvatar,
-  deleteAvatar,
-  updateUser,
-} from "../../api/users";
+import { uploadAvatar, deleteAvatar, updateUser } from "../../api/users";
+import { getCurrentUser } from "../../api/auth";
+import { ApiError } from "../../api/api";
 
 //nhớ sửa lại sau này
 type ProfileUser = {
@@ -87,15 +84,30 @@ const Profile = () => {
     }
     try {
       const data = await updateUser(field, formData[field]);
-
       syncUser(data.user);
-
       setEditing((prev) => ({
         ...prev,
         [field]: false,
       }));
     } catch (error) {
-      console.log(error);
+      if (error instanceof ApiError) {
+        switch (error.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+            break;
+        }
+      }
     }
   };
 
@@ -105,36 +117,87 @@ const Profile = () => {
 
     try {
       const data = await uploadAvatar(file);
-
       syncUser(data.user);
     } catch (error) {
-      console.error(error);
+      if (error instanceof ApiError) {
+        switch (error.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+            break;
+        }
+      }
     }
   };
 
   const handleDeleteAvatar = async () => {
     try {
       const data = await deleteAvatar();
-
       syncUser(data.user);
     } catch (error) {
-      console.error(error);
+      if (error instanceof ApiError) {
+        switch (error.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+            break;
+        }
+      }
     }
   };
 
   useEffect(() => {
-    getCurrentUser()
-      .then((data) => {
+    const fetchUser = async () => {
+      try {
+        const data = await getCurrentUser();
         setUser(data.user);
         setFormData({
           display_name: data.user.display_name,
           username: data.user.username,
           email: data.user.email,
         });
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+      } catch (err) {
+        if (err instanceof ApiError) {
+          switch (err.status) {
+            case 400:
+              break;
+            case 401:
+              break;
+            case 403:
+              break;
+            case 409:
+              break;
+            case 429:
+              break;
+            case 503:
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    };
+    fetchUser();
   }, []);
 
   return (

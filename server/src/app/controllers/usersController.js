@@ -8,32 +8,6 @@ const cloudinary = require("../../config/cloudinary");
 const { uploadToCloudinary } = require("../services/cloudinaryService");
 
 class UsersController {
-  //[GET] /users/me
-  async me(req, res) {
-    try {
-      const user_id = req.user.user_id;
-      const user = await User.findOne(
-        { user_id },
-        {
-          _id: 0,
-          user_id: 1,
-          display_name: 1,
-          username: 1,
-          email: 1,
-          avatar: 1,
-        },
-      );
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error("Get user info error:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-      });
-    }
-  }
   //[PATCH] /users/me
   async updateUser(req, res) {
     try {
@@ -127,10 +101,9 @@ class UsersController {
         resource_type: "image",
       });
 
-      //Lưu thông tin ảnh vào mongodb
       user.avatar = {
         url: result.secure_url,
-        user_id: result.public_id,
+        public_id: result.public_id,
       };
       await user.save();
 
