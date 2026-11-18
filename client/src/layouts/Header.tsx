@@ -29,8 +29,6 @@ const Header = () => {
   const handleWorkSpace = () => {
     navigate("/workspace");
   };
-  // sua isdark
-  //ghi là display_name nhưng thực chất là display_name sau này nhớ
   return (
     <nav className="navbar navbar-expand-lg bg-body fixed-top border">
       <div className="container-fluid">
@@ -71,14 +69,17 @@ const Header = () => {
               </a>
             </li>
           </ul>
-          <form className="d-flex">
+          <form className="d-flex align-items-center">
             <input
               className="form-control me-2"
               type="search"
               placeholder="Search"
               aria-label="Search"
             ></input>
-            <button className="btn btn-outline-success" type="submit">
+            <button
+              className={`btn rounded-0 ${isDark ? "btn-outline-warning" : "btn-outline-info"}`}
+              type="submit"
+            >
               Search
             </button>
           </form>
@@ -93,9 +94,9 @@ const Header = () => {
           )}
         </div>
         {user && (
-          <div className="dropdown ms-2">
+          <div className="d-flex dropdown ms-2">
             <button
-              className={`btn ${theme === "Dark" ? "btn-dark border-light" : "btn-light border-dark"} rounded-0`}
+              className={`btn ${isDark ? "btn-dark bg-dark border border-light" : "btn-light bg-light border border-dark"} rounded-0 p-1 d-flex align-items-center justify-content-center`}
               type="button"
               id="dropdownMenuButton1"
               data-bs-toggle="dropdown"
@@ -108,7 +109,10 @@ const Header = () => {
               />
             </button>
 
-            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            <ul
+              className="dropdown-menu dropdown-menu-end rounded-0"
+              aria-labelledby="dropdownMenuButton1"
+            >
               {userUtilityPage.map((page) => (
                 <li key={page.path}>
                   <Link className="dropdown-item" to={page.path}>

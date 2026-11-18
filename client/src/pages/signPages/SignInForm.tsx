@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/auth/useAuth";
 import { getGithubUrl, signInUser } from "../../api/auth";
+import { ApiError } from "../../api/api";
 
 type Props = { onSignUp: () => void };
 
@@ -51,8 +52,28 @@ const SignInForm = ({ onSignUp }: Props) => {
         break;
     }
   };
-  const handleSignWithGithub = () => {
-    window.location.href = getGithubUrl();
+  const handleSignWithGithub = async () => {
+    try {
+      const githubUrl = await getGithubUrl();
+      window.location.href = githubUrl;
+    } catch (err) {
+      if (err instanceof ApiError) {
+        switch (err.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          default:
+            break;
+        }
+      } else {
+        // 500
+      }
+    }
   };
 
   const handleSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -75,7 +96,37 @@ const SignInForm = ({ onSignUp }: Props) => {
       setUser(data.user);
       navigate("/");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Sign in failed");
+      if (error instanceof ApiError) {
+        switch (error.status) {
+          case 400:
+            setError("Invalid email or password");
+            break;
+          case 401:
+            setError("Unauthorized");
+            break;
+          case 403:
+            setError("Forbidden");
+            break;
+          case 404:
+            setError("User not found");
+            break;
+          case 409:
+            setError("Conflict");
+            break;
+          case 429:
+            setError("Too many requests. Please try again later.");
+            break;
+          case 503:
+            setError("Service unavailable. Please try again later.");
+            break;
+          default:
+            setError("Something went wrong. Please try again later.");
+            break;
+        }
+      } else {
+        // redirect this later
+        setError("Something went wrong. Please try again later.");
+      }
     }
   };
 

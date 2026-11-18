@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signUpUser } from "../../api/auth";
+import { ApiError } from "../../api/api";
 
 type Props = { onSignIn: () => void };
 
@@ -121,13 +122,39 @@ const SignUpForm = ({ onSignIn }: Props) => {
       return;
     }
 
-    signUpUser(fields.username, fields.email, fields.password)
-      .then(() => {
-        onSignIn();
-      })
-      .catch((error) => {
-        setError(error.message);
-      });
+    try {
+      await signUpUser(fields.username, fields.email, fields.password);
+      onSignIn();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        switch (err.status) {
+          case 400:
+            setError("Invalid email or password");
+            break;
+          case 401:
+            setError("Unauthorized");
+            break;
+          case 403:
+            setError("Forbidden");
+            break;
+          case 409:
+            setError("Conflict");
+            break;
+          case 429:
+            setError("Too many requests. Please try again later.");
+            break;
+          case 503:
+            setError("Service unavailable. Please try again later.");
+            break;
+          default:
+            setError("Something went wrong. Please try again later.");
+            break;
+        }
+      } else {
+        // redirect later
+        setError("Something went wrong. Please try again later.");
+      }
+    }
   };
 
   return (

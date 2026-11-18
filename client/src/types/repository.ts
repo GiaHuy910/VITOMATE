@@ -4,7 +4,7 @@ export type GithubRepository = {
   owner: string;
   defaultBranch: string;
 };
-export type deployForm = {
+export type storeRepositoryForm = {
   githubRepoId: Number;
   name: string;
   owner: string;

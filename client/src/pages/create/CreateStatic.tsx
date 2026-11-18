@@ -4,9 +4,12 @@ import { useNavigate } from "react-router-dom";
 import GitProvider from "../../components/GitProvider";
 import PublicGitRepo from "../../components/PublicGitRepo";
 import type { GithubRepository } from "../../types/repository";
-import { deployRepository } from "../../api/repo";
+import { storeRepository } from "../../api/repo";
+import { deployApp } from "../../api/app";
 import { useTheme } from "../../contexts/theme/useTheme";
 import EnvVarsModal from "../../components/EnvVarsModal";
+import type { deployAppForm } from "../../types/app";
+import { ApiError } from "../../api/api";
 
 type RepositoryForm = {
   name: string;
@@ -102,15 +105,48 @@ const CreateStatic = () => {
       return;
     }
     const envVars = getEnvVars();
-    const body = {
-      githubRepoId: repository.id,
-      name: form.name,
-      owner: repository.owner,
-      defaultBranch: form.defaultBranch,
-      envVars: envVars,
-    };
-    await deployRepository(body);
-    navigate("/dashboard");
+    try {
+      const body = {
+        githubRepoId: repository.id,
+        name: form.name,
+        owner: repository.owner,
+        defaultBranch: form.defaultBranch,
+        envVars: envVars,
+      };
+      const response = await storeRepository(body);
+      const data = response.repository;
+      const deployAppForm: deployAppForm = {
+        repoId: data.repoId,
+        owner: data.owner,
+        name: data.name,
+        branch: data.defaultBranch,
+        envVars: data.envVars,
+      };
+      deployApp(deployAppForm).catch(() => {}); // intentionally ignoring errors
+      navigate("/dashboard");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        switch (err.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 404:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+        }
+      } else {
+        // 500
+      }
+    }
   };
 
   return (

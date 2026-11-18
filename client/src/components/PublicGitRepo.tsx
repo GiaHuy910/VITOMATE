@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { checkGithubRepo } from "../api/repo";
 import type { GithubRepository } from "../types/repository";
+import { ApiError } from "../api/api";
 
 type Props = {
   onRepositoryConnected?: (repository: GithubRepository) => void;
@@ -12,6 +13,7 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
   const [error, setError] = useState("");
   //
   const [loading, setLoading] = useState(false);
+  const [connected, setConnected] = useState(false);
 
   const validateGitUrl = (value: string) => {
     if (!value.trim()) {
@@ -40,10 +42,28 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
     try {
       const data = await checkGithubRepo(repoUrl);
       onRepositoryConnected?.(data.repository);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+      setConnected(true);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        switch (err.status) {
+          case 400:
+            break;
+          case 401:
+            break;
+          case 403:
+            break;
+          case 409:
+            break;
+          case 429:
+            break;
+          case 503:
+            break;
+          default:
+            break;
+        }
+      } else {
+        // 500
+      }
     }
   };
   const handleChangeUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +82,7 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
           type="url"
           value={repoUrl}
           placeholder="https://github.com/Your-name-example/repo-example"
-          className="form-control border-0"
+          className="form-control border-0 rounded-0"
           onChange={handleChangeUrl}
         />
       </div>
@@ -75,15 +95,17 @@ const PublicGitRepo = ({ onRepositoryConnected }: Props) => {
         )}
       </div>
       <div className="d-flex justify-content-end mt-2">
-        <button
-          type="button"
-          disabled={!!error || !repoUrl.trim() || loading}
-          className="btn btn-secondary rounded-0"
-          hidden={!onRepositoryConnected}
-          onClick={handleConnect}
-        >
-          {loading ? "Checking..." : "Connect"}
-        </button>
+        {!connected && (
+          <button
+            type="button"
+            disabled={!!error || !repoUrl.trim() || loading}
+            className="btn btn-secondary rounded-0"
+            hidden={!onRepositoryConnected}
+            onClick={handleConnect}
+          >
+            {loading ? "Checking..." : "Connect"}
+          </button>
+        )}
       </div>
     </div>
   );

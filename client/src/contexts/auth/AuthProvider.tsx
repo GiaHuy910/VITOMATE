@@ -12,16 +12,17 @@ export const AuthProvider = ({ children }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCurrentUser()
-      .then(({ user }) => {
-        setUser(user);
-      })
-      .catch(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const data = await getCurrentUser();
+        setUser(data.user);
+      } catch {
         setUser(null);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchCurrentUser();
   }, []);
 
   const logout = async () => {
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }: Props) => {
       await logOutUser();
       setUser(null);
     } catch (error) {
-      console.error(error);
+      // change this position to "redicecting to "Something is wrong" page" later
     }
   };
 
